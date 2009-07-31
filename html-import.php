@@ -3,12 +3,15 @@
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
 Description: Imports well-formed static HTML pages into WordPress pages. Requires PHP5. Not tested on Windows servers. (Now with Dreamweaver template support.)
-Version: 1.0
+Version: 1.01
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.01 =
+* jQuery bug fixed
+* better Windows compatibility (July 31, 2009)
 = 1.0 =
 * First release (July 26, 2009)
 
@@ -50,6 +53,7 @@ function html_import_js() {
 }
 
 function html_import_css() {
+	$options = get_option('html_import');
 		echo "<style type=\"text/css\">\n";
 	 	echo ".clear, #html_import p.submit, #html_import .wrap p, #html_import .wrap h3, p.htmlimportfloat.clear { clear: both; } \n";	
 		echo "p.htmlimportfloat { float: left; width: 15em; margin-right: 2em; clear: none; } \n";
@@ -60,9 +64,11 @@ function html_import_css() {
 		echo "#importing th { width: 32% } \n";
 		echo "#importing th#id { width: 4% }\n";
 		echo "textarea#import-result { height: 12em; width: 100%; }\n";
-		echo "#content-region, #title-region { display: none; width: 100%; height: 8em; background: #f9f9f9; z-index: 10; }";
+		echo "#content-region, #title-region { width: 100%; height: 8em; background: #f9f9f9; z-index: 10; }";
 		echo "#content-switch, #title-switch { position: relative; height: 8em; }";
 		echo "#content-region, #content-tag, #title-region, #title-tag { position: absolute; }";
+	if ($options['import_content'] == 'tag') echo "#content-region { display: none }";
+	if ($options['import_title'] == 'tag') echo "#title-region { display: none }";
 		echo "</style>";
 }
 
@@ -473,18 +479,14 @@ function pretty_title($title) {
 }
 
 function parent_directory($path) {
-	// by Cory S.N. LaViska, http://abeautifulsite.net/notebook/74
-	// Detect backslashes
-    if( strstr($path, '\\') ) $backslash = true;
-    // Convert backslashes to forward slashes
-    $path = str_replace('\\', '/', $path);
-    // Add trailing slash if non-existent
-    if( substr($path, strlen($path) - 1) != '/' ) $path .= '/'; 
-    // Determine parent path
+	if (strpos($path, '\\') !== FALSE) {
+		$win = true;
+    	$path = str_replace('\\', '/', $path);
+	}
+    if (substr($path, strlen($path) - 1) != '/') $path .= '/'; 
     $path = substr($path, 0, strlen($path) - 1);
-    $path = substr( $path, 0, strrpos($path, '/') ) . '/';
-    // Convert backslashes back
-    if( !$convert_backslashes && $backslash ) $path = str_replace('/', '\\', $path);
+    $path = substr($path, 0, strrpos($path, '/')) . '/';
+    if ($win) $path = str_replace('/', '\\', $path);
     return $path;
 }
 ?>
