@@ -3,12 +3,15 @@
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
 Description: Imports well-formed static HTML pages into WordPress posts or pages. Requires PHP5. Now with Dreamweaver template support.
-Version: 1.02
+Version: 1.03
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.03 =
+* Still better error handling
+* minor code cleanup  (August 1, 2009)
 = 1.02 =
 * Better error handling for `fopen` and `file_get_contents`  (July 31, 2009)
 = 1.01 =
@@ -83,15 +86,7 @@ function html_import_css() {
 		if ($options['import_title'] == 'tag') echo "#title-region { display: none }";
 	}
 		echo "#tips h3 { margin-bottom: 0; }";
-		echo "#tips { -moz-border-radius-bottomleft:4px;
-			-moz-border-radius-bottomright:4px;
-			-moz-border-radius-topleft:4px;
-			-moz-border-radius-topright:4px;
-			border-style:solid;
-			border-width:1px; 
-			border-color: #DFDFDF;
-			background: #fff; 
-			padding: 0 2em 1em; }";
+		echo "#tips { -moz-border-radius: 4px; border: 1px solid #dfdfdf; background: #fff; padding: 0 2em 1em; }";
 		echo "</style>";
 }
 
@@ -348,16 +343,16 @@ function import_html_files($rootdir, $filearr=array())   {
 		if (in_array($ext, $allowed)) {
 						
 			// process the HTML file
-			$doc = new DOMDocument();
-			$doc->strictErrorChecking = FALSE; // ignore invalid HTML, we hope
-			$doc->preserveWhiteSpace = FALSE;  
-			$dom->formatOutput = false;  // speed this up
 			$contents = @fopen($path);  // read entire file
 			if (empty($contents)) $contents = @file_get_contents($path);  // read entire file
 			if (empty($contents)) wp_die("The PHP functions fopen and file_get_contents have both failed. We can't import any files without these functions. Please ask your server administrator if they are enabled.");
 			$encoded = mb_convert_encoding($contents, 'HTML-ENTITIES', "UTF-8"); 
-			$doc->loadHTML($encoded);
-			$xml = simplexml_import_dom($doc);
+			$doc = new DOMDocument();
+			$doc->strictErrorChecking = FALSE; // ignore invalid HTML, we hope
+			$doc->preserveWhiteSpace = FALSE;  
+			$doc->formatOutput = false;  // speed this up
+			@$doc->loadHTML($encoded);
+			$xml = @simplexml_import_dom($doc);
 			
 			// start building the WP post object to insert
 			$my_post = array();	
@@ -379,8 +374,6 @@ function import_html_files($rootdir, $filearr=array())   {
 				$my_post['post_title'] = strip_tags($my_post['post_title'][0]);
 			}
 			
-			//$my_post['post_title'] = (string)$xml->head->title;
-			
 			$remove = $options['remove_from_title'];
 			if (!empty($remove))
 				$my_post['post_title'] = str_replace($remove, '', $my_post['post_title']);
@@ -388,7 +381,7 @@ function import_html_files($rootdir, $filearr=array())   {
 			$my_post['post_type'] = $options['type'];
 			
 			if ($my_post['post_type'] == 'page') {
-				$parentdir = rtrim(parent_directory($path), '/');
+				$parentdir = rtrim(html_import_parent_directory($path), '/');
 				if (in_array($parentdir, $filearr))
 					$my_post['post_parent'] = array_search($parentdir, $filearr);
 				else $my_post['post_parent'] = $options['root_parent'];
@@ -457,7 +450,7 @@ function import_html_files($rootdir, $filearr=array())   {
 				}
 				
 				// allowed extensions only, please
-				$createpage = array_intersect($exts, $allowed);
+				$createpage = @array_intersect($exts, $allowed); // suppress warnings about not being an array
 				
 				// if the directory contains the right kind of files, create an empty parent page
 				if (!empty($createpage)) { 
@@ -465,7 +458,9 @@ function import_html_files($rootdir, $filearr=array())   {
 					$my_post = array();		  
 					
 					$title = trim(strrchr($path,'/'),'/');
-					$my_post['post_title'] = pretty_title($title);
+					$title = str_replace('_', ' ', $title);
+					$title = str_replace('-', ' ', $title);
+					$my_post['post_title'] = ucwords($title);
 					
 					if ($options['timestamp'] == 'filemtime')
 						$date = filemtime($path);
@@ -475,7 +470,7 @@ function import_html_files($rootdir, $filearr=array())   {
 					
 					$my_post['post_type'] = 'page';
 					
-					$parentdir = rtrim(parent_directory($path), '/');
+					$parentdir = rtrim(html_import_parent_directory($path), '/');
 					if (in_array($parentdir, $filearr))
 						$my_post['post_parent'] = array_search($parentdir, $filearr);
 					else $my_post['post_parent'] = $options['root_parent'];
@@ -502,14 +497,7 @@ function import_html_files($rootdir, $filearr=array())   {
     return $filearr;
 } // end function
   
-function pretty_title($title) {
-	$title = str_replace('_', ' ', $title);
-	$title = str_replace('-', ' ', $title);
-	$title = ucwords($title);
-	return $title;
-}
-
-function parent_directory($path) {
+function html_import_parent_directory($path) {
 	if (strpos($path, '\\') !== FALSE) {
 		$win = true;
     	$path = str_replace('\\', '/', $path);

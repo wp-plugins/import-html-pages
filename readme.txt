@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import/
 Tags: import, pages, static files
 Requires at least: 2.8
 Tested up to: 2.8.2
-Stable tag: 1.02
+Stable tag: 1.03
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -37,6 +37,18 @@ Options:
 
 == Frequently Asked Questions ==
 
+= Does this work on Windows servers? =
+
+It has not been tested on Windows. Give it a try and let me know how it goes!
+
+= I import a few files and then the script times out. What can I do? =
+
+The importer will attempt to work around your server's max_execution_time setting for PHP, but some servers don't allow this. You can try to increase it by adding a line to your .htaccess file:
+
+`php_value max_execution_time 160`
+
+If that gets you further but still doesn't finish, just increase the number (it's in seconds). However, note that your host might get irritated with you for hogging the server's resources. If you have a _lot_ of files to import, it's best to install WordPress on your desktop (XAMPP for Windows and MAMP for Macs make it pretty easy) and do the heavy lifting there.
+
 = Known bugs =
 
 1. The plugin will create an empty parent page for directories that contain the imported file types. However, it will not create parent pages for directories containing only other directories, even if those directories contain the right kinds of files.
@@ -62,12 +74,11 @@ The conferences and workshops directories will be created as parent pages, but t
 
 To work around this problem, you can populate your directories with dummy index.html pages. They should contain at least the `<html>`, `<head>`, and `<title>` tags, and you can give them distinctive titles (e.g. "DUMMY") so you can easily find and delete them once all your files have been imported.
 
-= Does this work on Windows servers? =
-
-It has not been tested on Windows. Give it a try and let me know how it goes!
-
 == Changelog ==
 
+= 1.03 =
+* Still better error handling
+* minor code cleanup  (August 1, 2009)
 = 1.02 =
 * Better error handling for `fopen` and `file_get_contents`  (July 31, 2009)
 = 1.01 =
@@ -75,6 +86,9 @@ It has not been tested on Windows. Give it a try and let me know how it goes!
 * better Windows compatibility (July 31, 2009)
 = 1.0 =
 * First release (July 26, 2009)
+
+= Roadmap = 
+1.1: Set tags and/or categories for imported posts (in the meantime, <a href="http://wordpress.org/extend/plugins/simple-tags/">Simple Tags</a> does a nice job on tags)
 
 == Screenshots ==
 
