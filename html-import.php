@@ -3,12 +3,14 @@
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
 Description: Imports well-formed static HTML pages into WordPress posts or pages. Requires PHP5. Now with Dreamweaver template support.
-Version: 1.03
+Version: 1.04
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.04 =
+* Better user capability check (August 3, 2009)
 = 1.03 =
 * Still better error handling
 * minor code cleanup  (August 1, 2009)
@@ -124,7 +126,7 @@ function html_import_add_pages() {
 
 // displays the options page content
 function html_import_options() {
-	if ( current_user_can('manage_options') ) {  
+	if ( current_user_can('import') ) {  
 	
 	// variables for the field and option names 
 		$hidden_field_name = 'html_import_submit_hidden';

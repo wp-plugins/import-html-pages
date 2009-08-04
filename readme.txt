@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import/
 Tags: import, pages, static files
 Requires at least: 2.8
 Tested up to: 2.8.3
-Stable tag: 1.03
+Stable tag: 1.04
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -76,6 +76,8 @@ To work around this problem, you can populate your directories with dummy index.
 
 == Changelog ==
 
+= 1.04 =
+* Better user capability check (August 3, 2009)
 = 1.03 =
 * Still better error handling
 * minor code cleanup  (August 1, 2009)
