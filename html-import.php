@@ -3,12 +3,14 @@
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
 Description: Imports well-formed static HTML pages into WordPress posts or pages. Requires PHP5. Now with Dreamweaver template support.
-Version: 1.04
+Version: 1.1
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.1 = 
+* Added Word cleanup option (August 14, 2009)
 = 1.04 =
 * Better user capability check (August 3, 2009)
 = 1.03 =
@@ -82,10 +84,12 @@ function html_import_css() {
 	if( $_POST[ $hidden_field_name ] == 'Y' ) {
 		if ($_POST['import_content'] == 'tag') echo "#content-region { display: none }";
 		if ($_POST['import_title'] == 'tag') echo "#title-region { display: none }";
+		if ($_POST['clean_html'] == 0) echo "#clean-region { display: none }";
 	}
 	else {
 		if ($options['import_content'] == 'tag') echo "#content-region { display: none }";
 		if ($options['import_title'] == 'tag') echo "#title-region { display: none }";
+		if ($options['clean_html'] == 0) echo "#clean-region { display: none }";
 	}
 		echo "#tips h3 { margin-bottom: 0; }";
 		echo "#tips { -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; border: 1px solid #dfdfdf; background: #fff; padding: 0 2em 1em; }";
@@ -111,6 +115,9 @@ function html_import_add_pages() {
 		'content_tag' => 'div',
 		'content_tagatt' => 'id',
 		'content_attval' => 'content',
+		'clean_html' => 0,
+		'allow_tags' => '<p><br><img><a><ul><ol><li><blockquote><cite><em><i><strong><b><h2><h3><h4><h5><h6><hr>',
+		'allow_attributes' => 'href,alt,title,src',
 		'import_title' => 'tag',
 		'title_region' => '',
 		'title_tag' => 'title',
@@ -151,6 +158,9 @@ function html_import_options() {
 			$options['content_tag'] = $_POST['content_tag'];
 			$options['content_tagatt'] = $_POST['content_tagatt'];
 			$options['content_attval'] = $_POST['content_attval'];
+			$options['clean_html'] = $_POST['clean_html'];
+			$options['allow_tags'] = $_POST['allow_tags'];
+			$options['allow_attributes'] = $_POST['allow_attributes'];
 			$options['import_title'] = $_POST['import_title'];
 			$options['title_region'] = $_POST['title_region'];
 			$options['title_tag'] = $_POST['title_tag'];
@@ -176,7 +186,7 @@ function html_import_options() {
 				echo "Redirect\t".$old."\t".get_permalink($id)."\t[R=301,NC,L]\n";
 			}
 			?></textarea>
-            <div class="updated"><p><strong><?php _e( " Imported "); echo count($result); _e(" files in "); echo timer_stop(0,5); _e(" seconds. See above for any pages that did not automatically import and need your attention."); ?></strong></p></div>
+            <div class="updated"><p><strong>Clean HTML option is: <?php echo $options['clean_html']; _e( " Imported "); echo count($result); _e(" files in "); echo timer_stop(0,5); _e(" seconds. See above for any pages that did not automatically import and need your attention."); ?></strong></p></div>
             </div> <!-- wrap -->
             <?php
 	} // Now display the options editing screen  ?>
@@ -190,7 +200,7 @@ function html_import_options() {
 	<input type="hidden" name="<?php echo $hidden_field_name; ?>" value="Y">
         
     <div id="optionsform">
-    <p><label><?php _e("Beginning directory or URL: "); ?><br />
+    <p><label><?php _e("Beginning directory: "); ?><br />
     <input type="text" name="root_directory" id="root_directory" value="<?php echo stripslashes(htmlentities($options['root_directory'])); ?>" class="widefloat" />  </label></p>
     
     <p><label><?php _e("Process files with these extensions: "); ?><br />
@@ -225,6 +235,22 @@ function html_import_options() {
         <input type="text" name="content_region" id="content_region" value="<?php echo stripslashes(htmlentities($options['content_region'])); ?>" />  </label><br />
         <small><?php _e("The name of the editable region (e.g. 'Main Content')"); ?></small></p> 
     </div>
+    <p><?php _e("Clean up bad (Word, Frontpage) HTML?"); ?></p>
+    <p><label><input name="clean_html" id="clean_html"  type="radio" value="1" 
+		<?php if ($options['clean_html'] == 1) { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#clean-region').show('fast');" /> yes</label>&nbsp;&nbsp;
+    <label><input name="clean_html" id="clean_html"  type="radio" value="0" 
+		<?php if ($options['clean_html'] == 0) { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#clean-region').hide('fast');" /> no</label> </p>
+    
+    <div id="clean-switch">
+    <div  id="clean-region">
+        <p><label><?php _e("Allowed HTML"); ?><br />
+        <input type="text" name="allow_tags" id="allow_tags" value="<?php echo stripslashes(htmlentities($options['allow_tags'])); ?>" class="widefloat" />  </label><br />
+        <small><?php _e("Enter tags (with brackets) to be preserved. <br />Suggested: &lt;p&gt;&lt;br&gt;&lt;img&gt;&lt;a&gt;&lt;ul&gt;&lt;ol&gt;&lt;li&gt;&lt;blockquote&gt;&lt;cite&gt;&lt;em&gt;&lt;i&gt;&lt;strong&gt;&lt;b&gt;&lt;h2&gt;&lt;h3&gt;&lt;h4&gt;&lt;h5&gt;&lt;h6&gt;&lt;hr&gt;"); ?></small></p> 
+        <p><label><?php _e("Allowed attributes"); ?><br />
+        <input type="text" name="allow_attributes" id="allow_attributes" value="<?php echo stripslashes(htmlentities($options['allow_attributes'])); ?>" class="widefloat" />  </label><br />
+        <small><?php _e("Enter attributes separated by commas. <br />Suggested: href,src,alt,title"); ?></small></p> 
+    </div></div>
+    
     
     <h3><?php _e("Title"); ?></h3>
     
@@ -255,6 +281,7 @@ function html_import_options() {
     <input type="text" name="remove_from_title" id="remove_from_title" value="<?php echo stripslashes(htmlentities($options['remove_from_title'])); ?>" class="widefloat" />  </label><br />
 	<small><?php _e("Any common title phrase (such as the site name, which WordPress will duplicate)"); ?></small></p>
     
+    <div id="metadata">
     <h3><?php _e("Metadata"); ?></h3>
     
     <p class="htmlimportfloat clear"><label><?php _e("Import files as: "); ?>
@@ -292,7 +319,7 @@ function html_import_options() {
     <p><label><input name="meta_desc" id="meta_desc" value="1" type="checkbox" <?php if (!empty($options['meta_desc'])) { ?> checked="checked" <?php } ?> /> <?php _e("Use meta description as excerpt"); ?> </label><br />
 	<small><?php _e("Excerpts will be stored for both posts and pages. However, to edit and/or display excerpts for pages, you will need to install a plugin such as <a href=\"http://blog.ftwr.co.uk/wordpress/page-excerpt/\">PJW Page Excerpt</a>
 					or <a href=\"http://www.laptoptips.ca/projects/wordpress-excerpt-editor/\">Excerpt Editor</a>."); ?></small></p>
-                    
+    </div>                
     <input type="hidden" name="action" value="update" />
 	<input type="hidden" name="page_options" value="html_import" />
   
@@ -408,9 +435,11 @@ function import_html_files($rootdir, $filearr=array())   {
 				$xquery = '//'.$tag;
 				if (!empty($tagatt))
 					$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
-				$my_post['post_content'] = $xml->xpath($xquery);
+				$content = $xml->xpath($xquery);
 				$my_post['post_content'] = $my_post['post_content'][0]->asXML(); // asXML() preserves HTML in content
 			}
+			if (!empty($options['clean_html']))
+				$my_post['post_content'] = clean_html($my_post['post_content'], $options['allow_tags'], $options['allow_attributes']);
 			// get rid of remaining newlines
 			if (!empty($my_post['post_content'])) {
 				$my_post['post_content'] = str_replace('&#13;', ' ', $my_post['post_content']); 
@@ -509,5 +538,24 @@ function html_import_parent_directory($path) {
     $path = substr($path, 0, strrpos($path, '/')) . '/';
     if ($win) $path = str_replace('/', '\\', $path);
     return $path;
+}
+	
+function clean_html($string,$allowtags=NULL,$allowattributes=NULL){
+    $string = strip_tags($string,$allowtags);
+    if (!is_null($allowattributes)) {
+        if(!is_array($allowattributes))
+            $allowattributes = explode(",",$allowattributes);
+        if(is_array($allowattributes))
+            $allowattributes = implode(")(?<!",$allowattributes);
+        if (strlen($allowattributes) > 0)
+            $allowattributes = "(?<!".$allowattributes.")";
+        $string = preg_replace_callback("/<[^>]*>/i",create_function(
+            '$matches',
+            'return preg_replace("/ [^ =]*'.$allowattributes.'=(\"[^\"]*\"|\'[^\']*\')/i", "", $matches[0]);'   
+        ),$string);
+    }
+	$string = str_replace('\n', ' ', $string); // reduce line breaks
+	$string = preg_replace("/<[^\/>]*>([\s]?)*<\/[^>]*>/", '', $string); // remove empty tags
+	return $string;
 }
 ?>
