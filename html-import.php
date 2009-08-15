@@ -9,6 +9,8 @@ Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.11 =
+* Left some debugging code in 1.1, oops! (August 15, 2009)
 = 1.1 = 
 * Added Word cleanup option (August 14, 2009)
 = 1.04 =
@@ -186,7 +188,7 @@ function html_import_options() {
 				echo "Redirect\t".$old."\t".get_permalink($id)."\t[R=301,NC,L]\n";
 			}
 			?></textarea>
-            <div class="updated"><p><strong>Clean HTML option is: <?php echo $options['clean_html']; _e( " Imported "); echo count($result); _e(" files in "); echo timer_stop(0,5); _e(" seconds. See above for any pages that did not automatically import and need your attention."); ?></strong></p></div>
+            <div class="updated"><p><strong><?php _e("Imported "); echo count($result); _e(" files in "); echo timer_stop(0,5); _e(" seconds. See above for any pages that did not automatically import and need your attention."); ?></strong></p></div>
             </div> <!-- wrap -->
             <?php
 	} // Now display the options editing screen  ?>
@@ -555,7 +557,7 @@ function clean_html($string,$allowtags=NULL,$allowattributes=NULL){
         ),$string);
     }
 	$string = str_replace('\n', ' ', $string); // reduce line breaks
-	$string = preg_replace("/<[^\/>]*>([\s]?)*<\/[^>]*>/", '', $string); // remove empty tags
+	$string = preg_replace("/<[^\/>]*>([\s]?)*<\/[^>]*>/", ' ', $string); // remove empty tags
 	return $string;
 }
 ?>
