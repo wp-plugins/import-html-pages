@@ -3,12 +3,16 @@
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
 Description: Imports well-formed static HTML pages into WordPress posts or pages. Requires PHP5. Now with Dreamweaver template support.
-Version: 1.12
+Version: 1.13
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
 == Changelog ==
 
+= 1.13 =
+* Fixed a bug in 1.11 when importing content specified by a tag (thanks, mjos)
+* Added an option to assign a category or tag to all imported posts (September 13, 2009)
+* This is 1.12, only uncorrupted (September 13, 2009)
 = 1.12 =
 * Fixed a bug in 1.11 when importing content specified by a tag (thanks, mjos)
 * Added an option to assign a category or tag to all imported posts (September 13, 2009)
@@ -469,7 +473,7 @@ function import_html_files($rootdir, $filearr=array())   {
 				if (!empty($tagatt))
 					$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
 				$content = $xml->xpath($xquery);
-				$my_post['post_content'] = $content->asXML(); // asXML() preserves HTML in content
+				$my_post['post_content'] = $content[0]->asXML(); // asXML() preserves HTML in content
 			}
 			if (!empty($options['clean_html']))
 				$my_post['post_content'] = html_import_clean_html($my_post['post_content'], $options['allow_tags'], $options['allow_attributes']);
