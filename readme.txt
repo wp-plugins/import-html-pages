@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 2.8
 Tested up to: 2.9.1
-Stable tag: 1.20
+Stable tag: 1.21
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -81,6 +81,8 @@ To work around this problem, you can populate your directories with dummy index.
 
 == Changelog ==
 
+= 1.21 =
+* same as 1.2; not sure why the plugin repository can't count
 = 1.2 =
 * Added custom taxonomy options
 * Better handling of mb encoding function and asXML
