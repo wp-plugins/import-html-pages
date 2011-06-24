@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 2.8
 Tested up to: 3.2
-Stable tag: 1.21
+Stable tag: 1.30
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -81,6 +81,13 @@ To work around this problem, you can populate your directories with dummy index.
 
 == Changelog ==
 
+= 1.30 =
+* The '.,..' directories are no longer optional, so you can't accidentally import hundreds of empty posts/pages by removing these from the skipped directories option.
+* The beginning directory default is now based on the path to your WordPress installation. There's also a hint shown below the field. This should help people locate their import directory correctly.
+* There's now an option to enter your old URL. If you enter it, your .htaccess redirects should work as displayed. If you leave it blank, you'll have to doctor the paths afterward, as before.
+* Character encoding IS now optional. If your special characters did not import correctly before, try again with this option unchecked (which is now the default).
+* Options are now deleted on plugin uninstall instead of deactivate. (Sorry about that.)
+* Code cleanup in preparation for version 2.0. (June 24, 2011)
 = 1.21 =
 * same as 1.2; not sure why the plugin repository can't count
 = 1.2 =
@@ -116,7 +123,7 @@ To work around this problem, you can populate your directories with dummy index.
 
 = Roadmap =
 
-1.3: improve the import process for single files
+2.0: improve the import process for single files
 and import images and other media files along with the text
 
 = Thanks =

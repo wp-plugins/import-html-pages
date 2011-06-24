@@ -2,47 +2,19 @@
 /*
 Plugin Name: Import HTML Pages
 Plugin URI: http://sillybean.net/code/wordpress/html-import/
-Description: Imports well-formed static HTML pages into WordPress posts or pages. Requires PHP5. Now with Dreamweaver template support and Word HTML cleanup.
-Version: 1.21
+Description: Imports well-formed static HTML files into WordPress posts or pages. Supports Dreamweaver templates and Word HTML cleanup.
+Version: 1.30
 Author: Stephanie Leary
 Author URI: http://sillybean.net/
 
-== TODO ==
+== TODO in 2.0 ==
 
 * import images
-
-== Changelog ==
-
-= 1.21 =
-* same as 1.2; not sure why the plugin repository can't count
-= 1.2 =
-* Added custom taxonomy options
-* Better handling of mb encoding function and asXML
-* Better security checking
-* Added translation support (January 24, 2010)
-= 1.13 =
-* Fixed a bug in 1.11 when importing content specified by a tag (thanks, mjos)
-* Added an option to assign a category or tag to all imported posts
-* This is 1.12, only uncorrupted (September 13, 2009)
-= 1.12 =
-* Fixed a bug in 1.11 when importing content specified by a tag (thanks, mjos)
-* Added an option to assign a category or tag to all imported posts (September 13, 2009)
-= 1.11 =
-* Left some debugging code in 1.1, oops! (August 15, 2009)
-= 1.1 = 
-* Added Word cleanup option (August 14, 2009)
-= 1.04 =
-* Better user capability check (August 3, 2009)
-= 1.03 =
-* Still better error handling
-* minor code cleanup  (August 1, 2009)
-= 1.02 =
-* Better error handling for `fopen` and `file_get_contents`  (July 31, 2009)
-= 1.01 =
-* jQuery bug fixed
-* better Windows compatibility (July 31, 2009)
-= 1.0 =
-* First release (July 26, 2009)
+* handle single file uploads
+* jQuery directory picker?
+* change over to the usual importer class?
+* progress meter?
+* move most of the hints into the Help screen
 
 Copyright 2009  Stephanie Leary  (email : steph@sillybean.net)
 
@@ -75,14 +47,14 @@ function html_import_activation_check() {
 	add_option('html_import', $options, '', 'yes');
 }
 register_activation_hook(__FILE__, 'html_import_activation_check');
-
-// when deactivated, remove option
-register_deactivation_hook( __FILE__, 'html_import_remove_options' );
+//*
+// when uninstalled, remove option
+register_uninstall_hook( __FILE__, 'html_import_remove_options' );
 
 function html_import_remove_options() {
 	delete_option('html_import');
 }
-
+/**/
 // i18n
 $plugin_dir = basename(dirname(__FILE__)). '/languages';
 load_plugin_textdomain( 'html_import', 'wp-content/plugins/' . $plugin_dir, $plugin_dir );
@@ -99,52 +71,44 @@ add_filter('plugin_action_links', 'html_import_plugin_actions', 10, 2);
 // Hook for adding admin menus
 add_action('admin_menu', 'html_import_add_pages');
 
+// Add jQuery
+//add_action('admin_init','jquery');
+
 function html_import_css() {
-	$options = get_option('html_import');
-		echo "<style type=\"text/css\">\n";
-	 	echo ".clear, #html_import p.submit, #html_import .wrap p, #html_import .wrap h3, p.htmlimportfloat.clear { clear: both; } \n";	
-		echo ".wrap h4 { margin: 1em 0 0; }\n";
-		echo "p.htmlimportfloat { float: left; width: 15em; margin-right: 2em; clear: none; } \n";
-		echo "p.widefloat { width: 31.4em; } \n";	
-		echo "input.widefloat { width: 48.5em; } \n";	
-		echo "small { color: #666; }\n";
-		echo "div#tips { width: 18em; float: right; } \n";
-		echo "div#optionsform { float: left; width: 48em; } \n";	
-		echo "#importing th { width: 32% } \n";
-		echo "#importing th#id { width: 4% }\n";
-		echo "textarea#import-result { height: 12em; width: 100%; }\n";
-		echo "#content-region, #title-region, #taxonomy { width: 100%; height: 8em; background: #f9f9f9; z-index: 10; }";
-		echo "#content-switch, #title-switch, #type-switch { position: relative; height: 8em; }";
-		echo "#content-region, #content-tag, #title-region, #title-tag, #taxonomy, #hierarchy { position: absolute; }";
-	if( $_POST[ $hidden_field_name ] == 'Y' ) {
-		if ($_POST['import_content'] == 'tag') echo "#content-region { display: none }";
-		if ($_POST['import_title'] == 'tag') echo "#title-region { display: none }";
-		if ($_POST['clean_html'] == 0) echo "#clean-region { display: none }";	
-		if ($_POST['type'] == 'page') echo "#taxonomy { display: none }";
-	}
-	else {
-		if ($options['import_content'] == 'tag') echo "#content-region { display: none }";
-		if ($options['import_title'] == 'tag') echo "#title-region { display: none }";
-		if ($options['clean_html'] == 0) echo "#clean-region { display: none }";
-		if ($options['type'] == 'page') echo "#taxonomy { display: none }";
-	}
-		echo "#tips h3 { margin-bottom: 0; }";
-		echo "#tips { -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; border: 1px solid #dfdfdf; background: #fff; padding: 0 2em 1em; }";
-		echo "</style>";
+	$options = get_option('html_import'); ?>
+		<style type="text/css">
+	 	.clear, #html_import p.submit, #html_import .wrap p, #html_import .wrap h3, p.htmlimportfloat.clear, div#tips { clear: both; } 	
+		.wrap h4 { margin: 1em 0 0; }
+		kbd { display: inline; } 
+		p.htmlimportfloat { float: left; width: 15em; margin-right: 2em; clear: none; } 
+		p.widefloat { width: 31.4em; } 	
+		input.widefloat { width: 48.5em; } 	
+		small { color: #666; }
+		#importing th { width: 32% } 
+		#importing th#id { width: 4% }
+		textarea#import-result { height: 12em; width: 100%; }
+		#content-region, #title-region, #taxonomy { width: 100%; height: 8em; z-index: 10; }
+		#content-switch, #title-switch, #type-switch { position: relative; height: 8em; }
+		#content-region, #content-tag, #title-region, #title-tag, #taxonomy, #hierarchy { position: absolute; }
+		#content-region, #title-region, #clean-region, #taxonomy { display: none; }
+		#tips h3 { margin-bottom: 0; }
+		#tips { -moz-border-radius: 4px; -webkit-border-radius: 4px; border-radius: 4px; border: 1px solid #dfdfdf; background: #fff; padding: 0 2em 1em; }
+		</style>
+	<?php
 }
 
 function html_import_add_pages() {
     // Add a new submenu under Options:
-	$css = add_options_page(__('HTML Import', 'import-html-pages'), __('HTML Import', 'import-html-pages'), 8, basename(__FILE__), 'html_import_options_page');
+	$css = add_options_page(__('HTML Import', 'import-html-pages'), __('HTML Import', 'import-html-pages'), 'manage_options', basename(__FILE__), 'html_import_options_page');
 	add_action("admin_head-$css", 'html_import_css');
 }
 
 function html_import_get_options() {
 	// set defaults
 	$defaults = array(
-		'root_directory' => __('/path/to/files', 'import-html-pages'),
+		'root_directory' => __(ABSPATH.'html-files-to-import', 'import-html-pages'),
 		'file_extensions' => 'html,htm,shtml',
-		'skipdirs' => __('.,..,images', 'import-html-pages'),
+		'skipdirs' => __('images', 'import-html-pages'),
 		'status' => 'publish',
 		'root_parent' => 0,
 		'type' => 'page',
@@ -157,6 +121,7 @@ function html_import_get_options() {
 		'clean_html' => 0,
 		'allow_tags' => '<p><br><img><a><ul><ol><li><blockquote><cite><em><i><strong><b><h2><h3><h4><h5><h6><hr>',
 		'allow_attributes' => 'href,alt,title,src',
+		'encode' => 0,
 		'import_title' => 'tag',
 		'title_region' => '',
 		'title_tag' => __('title', 'import-html-pages'),
@@ -188,7 +153,7 @@ function html_import_options_page() {
 	
 		// See if the user has posted us some information
 		// If they did, this hidden field will be set to 'Y'
-		if ( $_POST[ $hidden_field_name ] == 'Y' ) {
+		if ( isset($_POST[ $hidden_field_name ]) && $_POST[ $hidden_field_name ] == 'Y' ) {
 			if (! wp_verify_nonce($_POST['_wpnonce'], 'html_import') ) die("Failed security check!");
 		 ?> 
 			<div class="wrap">
@@ -205,6 +170,7 @@ function html_import_options_page() {
 	  			// Save the posted value in the database
 				$options = array();
 				$options['root_directory'] = $_POST['root_directory'];
+				$options['old_url'] = $_POST['old_url'];
 				$options['file_extensions'] = $_POST['file_extensions'];
 				$options['skipdirs'] = $_POST['skipdirs'];
 				$options['status'] = $_POST['status'];
@@ -216,6 +182,7 @@ function html_import_options_page() {
 				$options['content_tag'] = $_POST['content_tag'];
 				$options['content_tagatt'] = $_POST['content_tagatt'];
 				$options['content_attval'] = $_POST['content_attval'];
+				$options['encode'] = $_POST['encode'];
 				$options['clean_html'] = $_POST['clean_html'];
 				$options['allow_tags'] = $_POST['allow_tags'];
 				$options['allow_attributes'] = $_POST['allow_attributes'];
@@ -249,6 +216,9 @@ function html_import_options_page() {
 							   <a href="http://www.workingwith.me.uk/articles/scripting/mod_rewrite">RewriteRule</a> instead.', 'import-html-pages'); ?></small></p>
 				<textarea id="import-result"><?php
 					foreach ($result as $id => $old) {
+						$url = esc_url($options['old_url']);
+						$url = rtrim($url, '/');
+						if (!empty($url)) $old = str_replace($options['root_directory'], $url, $old);
 						echo "Redirect\t".$old."\t".get_permalink($id)."\t[R=301,NC,L]\n";
 					} ?>
 				</textarea>
@@ -275,17 +245,22 @@ function html_import_options_page() {
 	?>
     <div id="optionsform">
     <p><label><?php _e("Beginning directory: ", 'import-html-pages'); ?><br />
-    <input type="text" name="root_directory" id="root_directory" value="<?php echo stripslashes(htmlentities($options['root_directory'])); ?>" 
+    <input type="text" name="root_directory" id="root_directory" value="<?php esc_attr_e($options['root_directory']); ?>" 
     	class="widefloat" />  </label><br />
-	<small><?php _e('This should be a full path from the server root, on the same server where WordPress is running now.', 'import-html-pages'); ?></small></p>
+	<small><?php _e('This should be a full path from the server root, on the same server where WordPress is running now.', 'import-html-pages'); ?><br />
+		<?php _e('Hint: the full path to this WordPress installation is: '); ?><kbd><?php echo ABSPATH; ?></kbd></small></p>
+	
+	 <p><label><?php _e("Old URL: ", 'import-html-pages'); ?><br />
+	    <input type="text" name="old_url" id="old_url" value="<?php esc_html_e($options['old_url']); ?>" class="widefloat" />  </label><br />
+		<small><?php _e('Enter the old URL matching your beginning directory if you would like .htaccess redirects to be generated for you.', 'import-html-pages'); ?></small></p>
     
     <p><label><?php _e("Process files with these extensions: ", 'import-html-pages'); ?><br />
-    <input type="text" name="file_extensions" id="file_extensions" value="<?php echo stripslashes(htmlentities($options['file_extensions'])); ?>" 
+    <input type="text" name="file_extensions" id="file_extensions" value="<?php esc_attr_e($options['file_extensions']); ?>" 
     	class="widefloat" />  </label><br />
 	<small><?php _e("Enter file extensions, without periods, separated by commas. All other file types will be ignored.", 'import-html-pages'); ?></small></p>
 
     <p><label><?php _e("Skip directories with these names: ", 'import-html-pages'); ?><br />
-        <input type="text" name="skipdirs" id="skipdirs" value="<?php echo stripslashes(htmlentities($options['skipdirs'])); ?>" 
+        <input type="text" name="skipdirs" id="skipdirs" value="<?php esc_attr_e($options['skipdirs']); ?>" 
         	class="widefloat" />  </label><br />
     <small><?php _e("Enter directory names, without slashes, separated by commas. All files in these directories will be ignored.", 'import-html-pages'); ?></small></p>
     
@@ -293,56 +268,62 @@ function html_import_options_page() {
     <p><?php _e("Select content by:", 'import-html-pages'); ?></p>
 	
     <p><label><input name="import_content" id="import_content"  type="radio" value="tag" 
-	<?php if ($options['import_content'] == "tag") { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#content-region').hide('fast');" />
+	<?php if ($options['import_content'] == "tag") { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#content-region').hide('fast'); jQuery('#content-tag').show('fast');" />
 		<?php _e('HTML tag', 'import-html-pages'); ?></label>&nbsp;&nbsp;
     <label><input name="import_content" id="import_content"  type="radio" value="region" 
-	<?php if ($options['import_content'] == "region") { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#content-region').show('fast');" />	
+	<?php if ($options['import_content'] == "region") { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#content-tag').hide('fast'); jQuery('#content-region').show('fast');" />	
 		<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label> </p>
     
     <div id="content-switch">
-        <div id="content-tag">
+        <div id="content-tag" <?php if ($options['import_content'] == 'region') echo "style=display:none;"; ?>>
             <p class="htmlimportfloat clear"><label><?php _e("Tag", 'import-html-pages'); ?><br />
-            <input type="text" name="content_tag" id="content_tag" value="<?php echo stripslashes(htmlentities($options['content_tag'])); ?>" />
+            <input type="text" name="content_tag" id="content_tag" value="<?php echo esc_attr_e($options['content_tag']); ?>" />
             </label>
             <br />
             <small><?php _e("The HTML tag, without brackets", 'import-html-pages'); ?></small></p>
             
             <p class="htmlimportfloat"><label><?php _e("Attribute", 'import-html-pages'); ?><br />
-            <input type="text" name="content_tagatt" id="content_tagatt" value="<?php echo stripslashes(htmlentities($options['content_tagatt'])); ?>" />
+            <input type="text" name="content_tagatt" id="content_tagatt" value="<?php esc_attr_e($options['content_tagatt']); ?>" />
             </label>
             <br />
             <small><?php _e("Leave blank to use a tag without an attribute, or when the attributes don't matter, such as &lt;body&gt;", 'import-html-pages'); ?></small>
             </p>
             
             <p class="htmlimportfloat"><label><?php _e("= Value", 'import-html-pages'); ?><br />
-            <input type="text" name="content_attval" id="content_attval" value="<?php echo stripslashes(htmlentities($options['content_attval'])); ?>" />
+            <input type="text" name="content_attval" id="content_attval" value="<?php esc_attr_e($options['content_attval']); ?>" />
             </label>
             <br />
             <small><?php _e("Enter the attribute's value (such as width, ID, or class name) without quotes", 'import-html-pages'); ?></small>
             </p>
         </div>
         
-        <p id="content-region"><label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
-        <input type="text" name="content_region" id="content_region" value="<?php echo stripslashes(htmlentities($options['content_region'])); ?>" />  
+        <p id="content-region" <?php if ($options['import_content'] == 'region') echo "style=display:block;"; ?>>
+		<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
+        <input type="text" name="content_region" id="content_region" value="<?php esc_attr_e($options['content_region']); ?>" />  
         </label><br />
         <small><?php _e("The name of the editable region (e.g. 'Main Content')", 'import-html-pages'); ?></small>
         </p> 
     </div>
+	<p><label><input name="encode" id="encode" value="1" type="checkbox" <?php checked($options['encode']); ?> /> 
+		<?php _e("Convert character set to UTF-8", 'import-html-pages'); ?> </label><br />
+	<small><?php _e("Check this option if your special characters are not imported correctly.", 'import-html-pages'); ?></small></p>
+   
+	<p><label><input name="meta_desc" id="meta_desc" value="1" type="checkbox" <?php checked($options['meta_desc']); ?> /> 
+		<?php _e("Use meta description as excerpt", 'import-html-pages'); ?> </label><br />
+	<small><?php _e("Excerpts will be stored for both posts and pages. However, to edit and/or display excerpts for pages, you will need to install 
+					a plugin such as <a href=\"http://blog.ftwr.co.uk/wordpress/page-excerpt/\">PJW Page Excerpt</a>
+					or <a href=\"http://www.laptoptips.ca/projects/wordpress-excerpt-editor/\">Excerpt Editor</a>.", 'import-html-pages'); ?></small></p>
     
-    <p><?php _e("Clean up bad (Word, Frontpage) HTML?", 'import-html-pages'); ?></p>
-    <p><label><input name="clean_html" id="clean_html"  type="radio" value="1" 
-		<?php if ($options['clean_html'] == 1) { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#clean-region').show('fast');" /> 
-		<?php _e("yes", 'import-html-pages'); ?></label>&nbsp;&nbsp;
-    <label><input name="clean_html" id="clean_html"  type="radio" value="0" 
-		<?php if ($options['clean_html'] == 0) { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#clean-region').hide('fast');" /> 
-		<?php _e("no", 'import-html-pages'); ?></label> 
+    <p><label><input name="clean_html" id="clean_html"  type="checkbox" value="1" 
+		<?php checked($options['clean_html'], '1'); ?> onclick="jQuery(this).is(':checked') && jQuery('#clean-region').show('fast') || jQuery('#clean-region').hide('fast');" />
+		<?php _e("Clean up bad (Word, Frontpage) HTML?", 'import-html-pages'); ?> </label> 
     </p>
     
     <div id="clean-switch">
-        <div  id="clean-region">
+        <div  id="clean-region" <?php if ($options['clean_html'] == '1') echo "style=display:block;"; ?>>
         	<p>
                 <label><?php _e("Allowed HTML", 'import-html-pages'); ?><br />
-                <input type="text" name="allow_tags" id="allow_tags" value="<?php echo stripslashes(htmlentities($options['allow_tags'])); ?>" 
+                <input type="text" name="allow_tags" id="allow_tags" value="<?php esc_attr_e($options['allow_tags']); ?>" 
                     class="widefloat" />  </label><br />
                 <small><?php _e("Enter tags (with brackets) to be preserved. <br />Suggested: ", 'import-html-pages'); ?> 
                 &lt;p&gt;
@@ -380,7 +361,7 @@ function html_import_options_page() {
             </p> 
             
             <p><label><?php _e("Allowed attributes", 'import-html-pages'); ?><br />
-            <input type="text" name="allow_attributes" id="allow_attributes" value="<?php echo stripslashes(htmlentities($options['allow_attributes'])); ?>" 
+            <input type="text" name="allow_attributes" id="allow_attributes" value="<?php esc_attr_e($options['allow_attributes']); ?>" 
             	class="widefloat" />  </label><br />
             <small><?php _e("Enter attributes separated by commas. <br />Suggested: href,src,alt,title<br />
     			<em>If you have data tables, also include:</em> summary,rowspan,colspan,span", 'import-html-pages'); ?></small>
@@ -393,36 +374,37 @@ function html_import_options_page() {
     
     <p><?php _e("Select title by:", 'import-html-pages'); ?><br />
 	<label><input name="import_title" id="import_title"  type="radio" value="tag" 
-		<?php if ($options['import_title'] == "tag") { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#title-region').hide('fast');" /> 
+		<?php if ($options['import_title'] == "tag") { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#title-region').hide('fast'); jQuery('#title-tag').show('fast');" /> 
 		 <?php _e("HTML tag", 'import-html-pages'); ?></label>&nbsp;&nbsp;  
     <label><input name="import_title" id="import_title"  type="radio" value="region" 
-		<?php if ($options['import_title'] == "region") { ?> checked="checked" <?php } ?>  onclick="javascript: jQuery('#title-region').show('fast');" />
+		<?php if ($options['import_title'] == "region") { ?> checked="checked" <?php } ?>  onclick="javascript: jQuery('#title-region').show('fast'); jQuery('#title-tag').hide('fast');" />
          <?php _e("Dreamweaver template region", 'import-html-pages'); ?></label></p>
     
     <div id="title-switch">
-        <div id="title-tag">
+        <div id="title-tag" <?php if ($options['import_title'] == 'region') echo "style=display:none;"; ?>>
             <p class="htmlimportfloat clear"><label><?php _e("Tag containing page title: ", 'import-html-pages'); ?><br />
-            <input type="text" name="title_tag" id="title_tag" value="<?php echo stripslashes(htmlentities($options['title_tag'])); ?>" /></label><br />
+            <input type="text" name="title_tag" id="title_tag" value="<?php echo esc_attr_e($options['title_tag']); ?>" /></label><br />
             <small><?php _e("The HTML tag, without brackets", 'import-html-pages'); ?></small></p>
             
             <p class="htmlimportfloat"><label><?php _e("Attribute", 'import-html-pages'); ?><br />
-            <input type="text" name="title_tagatt" id="title_tagatt" value="<?php echo stripslashes(htmlentities($options['title_tagatt'])); ?>" /></label>
+            <input type="text" name="title_tagatt" id="title_tagatt" value="<?php echo esc_attr_e($options['title_tagatt']); ?>" /></label>
             <br />
             <small><?php _e("Leave blank to use a tag without an attribute, or when the attributes don't matter, such as &lt;title&gt;", 'import-html-pages'); ?></small></p>
             
             <p class="htmlimportfloat"><label><?php _e("= Value", 'import-html-pages'); ?><br />
-            <input type="text" name="title_attval" id="title_attval" value="<?php echo stripslashes(htmlentities($options['title_attval'])); ?>" /></label>
+            <input type="text" name="title_attval" id="title_attval" value="<?php esc_attr_e($options['title_attval']); ?>" /></label>
             <br />
             <small><?php _e("Enter the attribute's value (such as width, ID, or class name) without quotes", 'import-html-pages'); ?></small></p>
         </div>
-        <p id="title-region"><label><?php _e("Dreamweaver template region containing page title: ", 'import-html-pages'); ?><br />
-        <input type="text" name="title_region" id="title_region" value="<?php echo stripslashes(htmlentities($options['title_region'])); ?>" /></label>
+        <p id="title-region"  <?php if ($options['import_title'] == 'region') echo "style=display:block;"; ?>>
+			<label><?php _e("Dreamweaver template region containing page title: ", 'import-html-pages'); ?><br />
+        <input type="text" name="title_region" id="title_region" value="<?php esc_attr_e($options['title_region']); ?>" /></label>
         <br />
         <small><?php _e("The name of the editable region (e.g. 'Page Title')", 'import-html-pages'); ?></small></p>
    	</div>
    
     <p class="clear"><label><?php _e("Phrase to remove from page title: ", 'import-html-pages'); ?><br />
-    <input type="text" name="remove_from_title" id="remove_from_title" value="<?php echo stripslashes(htmlentities($options['remove_from_title'])); ?>" 
+    <input type="text" name="remove_from_title" id="remove_from_title" value="<?php esc_attr_e($options['remove_from_title']); ?>" 
     	class="widefloat" />  </label><br />
 	<small><?php _e("Any common title phrase (such as the site name, which WordPress will duplicate)", 'import-html-pages'); ?></small></p>
     
@@ -431,10 +413,10 @@ function html_import_options_page() {
     
     <p class="htmlimportfloat clear"><?php _e("Import files as: ", 'import-html-pages'); ?><br />
     <label><input name="type" type="radio" value="page" 
-	<?php if ($options['type'] == 'page') { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#taxonomy').hide('fast');" /> 
+	<?php if ($options['type'] == 'page') { ?> checked="checked" <?php } ?> onclick="javascript: jQuery('#taxonomy').hide('fast'); jQuery('#hierarchy').show('fast');" /> 
 		<?php _e("pages", 'import-html-pages'); ?></label>&nbsp;&nbsp;
     <label><input name="type" type="radio" value="post" 
-	<?php if ($options['type'] == "post") { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#taxonomy').show('fast');" /> 
+	<?php if ($options['type'] == "post") { ?> checked="checked" <?php  } ?> onclick="javascript: jQuery('#hierarchy').hide('fast'); jQuery('#taxonomy').show('fast');" /> 
 		<?php _e("posts", 'import-html-pages'); ?></label> </p>
     
     <p class="htmlimportfloat widefloat"><label><?php _e("Set timestamps to: ", 'import-html-pages'); ?>
@@ -456,7 +438,8 @@ function html_import_options_page() {
     <?php wp_dropdown_users(array('selected' => $options['user'])); ?></label></p>
     
     <div id="type-switch" class="clear">
-        <p class="clear" id="hierarchy"><label><?php _e("Import pages as children of: ", 'import-html-pages'); ?>
+        <p class="clear" id="hierarchy" <?php if ($options['type'] == 'post') echo "style=display:none;"; ?>>
+			<label><?php _e("Import pages as children of: ", 'import-html-pages'); ?>
         <?php 
             $pages = wp_dropdown_pages(array('echo' => 0, 'selected' => $options['root_parent'], 'name' => 'root_parent', 
 				'show_option_none' => __('None (top level)', 'import-html-pages'), 'sort_column'=> 'menu_order, post_title'));
@@ -467,13 +450,13 @@ function html_import_options_page() {
         <small><?php _e('Your directory hierarchy will be maintained, but your top level files will be children of the page selected here.', 'import-html-pages'); ?></small>
         </p>
     
-        <div id="taxonomy">
+        <div id="taxonomy" <?php if ($options['type'] == 'post') echo "style=display:block;"; ?>>
             <p class="clear"><label><?php _e("Categorize imported posts as: ", 'import-html-pages'); ?>
             <?php wp_dropdown_categories(array('name' => 'categorize', 'hide_empty'=>0, 'hierarchical'=>1, 'selected'=>$options['categorize'])); ?>
             </p>
             
             <p class="clear"><label><?php _e("Tag imported posts as: ", 'import-html-pages'); ?>
-            <input type="text" name="tagwith" id="tagwith" value="<?php echo stripslashes(htmlentities($options['tagwith'])); ?>" 
+            <input type="text" name="tagwith" id="tagwith" value="<?php esc_attr_e($options['tagwith']); ?>" 
             	class="widefloat" /></label>
             <br />
             <small><?php _e('Enter tags separated by commas.', 'import-html-pages'); ?></small></p>
@@ -482,30 +465,26 @@ function html_import_options_page() {
 
 	<?php global $wp_taxonomies; ?>
 	<?php if ( is_array( $wp_taxonomies ) ) :
-		$standardtaxes = array('category','link_category','post_tag');
-		$taxwith = $options['taxwith']; ?>
+		$standardtaxes = array('category','link_category','post_tag','nav_menu','post_format');
+		$taxwith = $options['taxwith'];
+		$taxoutput = ''; ?>
 	<div id="custom-taxonomy" class="clear">
-	<h4><?php _e('Custom Taxonomies', 'import-html-pages'); ?></h4>
 			<?php foreach ( $wp_taxonomies as $tax ) : ?>
 				<?php if (!in_array($tax->name, $standardtaxes)) : 
-					if (is_array($taxwith[$tax->name])) $values = implode(',', $taxwith[$tax->name]);
-					else $values = $taxwith[$tax->name]; ?>
-					<p class="clear"><label><?php echo $tax->label; ?><br />
-					<input type="text" name="taxwith[<?php echo $tax->name; ?>]" class="widefloat" 
-							value="<?php echo $values; ?>"  /></label>
-		            <br />
-		            <small><?php echo $tax->helps; ?></small></p>
-				<?php endif; ?>
-			<?php endforeach; ?>
+					if (empty($taxwith)) $values = '';
+					elseif (is_array($taxwith[$tax->name])) $values = implode(',', $taxwith[$tax->name]);
+					else $values = $taxwith[$tax->name]; 
+					$taxoutput .= '<p class="clear"><label>'.$tax->label.'<br />
+					<input type="text" name="taxwith['.$tax->name.']" class="widefloat" 
+							value="'.$values.'"  /></label>';
+				 endif; ?>
+			<?php endforeach; 
+	if (!empty($taxoutput)) { ?>
+	<h3><?php _e('Custom Taxonomies', 'import-html-pages'); ?></h3>
+	<?php echo $taxoutput; } ?>
 	</div>
 	<?php endif; ?>
-    
-	<h4>Excerpts</h4>
-    <p><label><input name="meta_desc" id="meta_desc" value="1" type="checkbox" <?php checked($options['meta_desc']); ?> /> 
-		<?php _e("Use meta description as excerpt", 'import-html-pages'); ?> </label><br />
-	<small><?php _e("Excerpts will be stored for both posts and pages. However, to edit and/or display excerpts for pages, you will need to install 
-					a plugin such as <a href=\"http://blog.ftwr.co.uk/wordpress/page-excerpt/\">PJW Page Excerpt</a>
-					or <a href=\"http://www.laptoptips.ca/projects/wordpress-excerpt-editor/\">Excerpt Editor</a>.", 'import-html-pages'); ?></small></p>
+
     </div>                
     
     <input type="hidden" name="action" value="update" />
@@ -550,7 +529,9 @@ function import_html_files($rootdir, $filearr=array())   {
 	$options = get_option('html_import');
 	
     $allowed = explode(",", $options['file_extensions']);
-	$skipdirs = explode(",", $options['skipdirs']);
+	$skipdirs = $options['skipdirs'];
+	$skipdirs = explode(",", $skipdirs);
+	$skipdirs = array_merge($skipdirs, array('.','..'));
     $dir_content = scandir($rootdir);
     foreach($dir_content as $key => $val) {
       set_time_limit(30);
@@ -565,7 +546,7 @@ function import_html_files($rootdir, $filearr=array())   {
 			$contents = @fopen($path);  // read entire file
 			if (empty($contents)) $contents = @file_get_contents($path);  // read entire file
 			if (empty($contents)) wp_die("The PHP functions fopen and file_get_contents have both failed. We can't import any files without these functions. Please ask your server administrator if they are enabled.");
-			if (function_exists('mb_convert_encoding')) $encoded = mb_convert_encoding($contents, 'HTML-ENTITIES', "UTF-8"); 
+			if (function_exists('mb_convert_encoding') && ($options['encode'] == 1)) $encoded = mb_convert_encoding($contents, 'HTML-ENTITIES', "UTF-8"); 
 			else $encoded = $contents;
 			$doc = new DOMDocument();
 			$doc->strictErrorChecking = FALSE; // ignore invalid HTML, we hope
@@ -633,7 +614,7 @@ function import_html_files($rootdir, $filearr=array())   {
 				if (!empty($tagatt))
 					$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
 				$content = $xml->xpath($xquery);
-				if (is_array($content) && is_object($content[0]))
+				if (is_array($content) && isset($content[0]) && is_object($content[0]))
 					$my_post['post_content'] = $content[0]->asXML(); // asXML() preserves HTML in content
 				else $my_post['post_content'] = '';
 			}
@@ -752,6 +733,7 @@ function html_import_set_custom_taxonomy($postid, $taxinputs) {
 }
 
 function html_import_parent_directory($path) {
+	$win = false;
 	if (strpos($path, '\\') !== FALSE) {
 		$win = true;
     	$path = str_replace('\\', '/', $path);
