@@ -2,10 +2,11 @@
 
 function html_import_get_options() {
 	$defaults = array(
-		'root_directory' => __(ABSPATH.'html-files-to-import', 'import-html-pages'),
+		'root_directory' => ABSPATH.__('html-files-to-import', 'import-html-pages'),
 		'old_url' => '',
+		'index_file' => 'index.html',
 		'file_extensions' => 'html,htm,shtml',
-		'skipdirs' => __('images,includes', 'import-html-pages'),
+		'skipdirs' => __('images,includes,Templates', 'import-html-pages'),
 		'status' => 'publish',
 		'root_parent' => 0,
 		'type' => 'page',
@@ -16,9 +17,9 @@ function html_import_get_options() {
 		'content_tagatt' => __('id', 'import-html-pages'),
 		'content_attval' => __('content', 'import-html-pages'),
 		'clean_html' => 0,
-		'allow_tags' => '<p><br><img><a><ul><ol><li><blockquote><cite><em><i><strong><b><h2><h3><h4><h5><h6><hr>',
+		'encode' => 1,
+		'allow_tags' => '<p><br><img><a><ul><ol><li><dl><dt><dd><blockquote><cite><em><i><strong><b><h2><h3><h4><h5><h6><hr>',
 		'allow_attributes' => 'href,alt,title,src',
-		'encode' => 0,
 		'import_title' => 'tag',
 		'title_region' => '',
 		'title_tag' => __('title', 'import-html-pages'),
@@ -27,6 +28,7 @@ function html_import_get_options() {
 		'remove_from_title' => '',
 		'meta_desc' => 1,
 		'user' => 0,
+		'firstrun' => true,
 	);
 	$options = get_option('html_import');
 	if (!is_array($options)) $options = array();
@@ -35,13 +37,18 @@ function html_import_get_options() {
 
 function html_import_options_page() { ?>
 	<div class="wrap">
-		<h2><?php _e( 'HTML Import Settings', 'import-html-pages'); ?></h2> 
+		<h2><?php _e( 'HTML Import Settings', 'import-html-pages'); ?></h2>
+		
 		<form method="post" id="html_import" action="options.php">
 			<?php 
 			settings_fields('html_import');
 			get_settings_errors( 'html_import' );	
 			settings_errors( 'html_import' );
 			$options = get_option('html_import');
+			
+			if ($options['firstrun'] === true) {
+			echo '<p>'.sprintf(__('Welcome to HTML Import! This is a complicated importer with many options. Please look through all the tabs on this page before running your import.', 'import-html-pages'), 'options-general.php?page=html-import.php').'</p>'; 
+			}
 			?>
 
 	<div class="ui-tabs">
@@ -51,6 +58,7 @@ function html_import_options_page() { ?>
 			<li><a href="#title"><?php _e("Title", 'import-html-pages'); ?></a></li>
 			<li><a href="#metadata"><?php _e("Metadata", 'import-html-pages'); ?></a></li>
 			<li><a href="#taxonomies"><?php _e("Categories, Tags, Taxonomies", 'import-html-pages'); ?></a></li>
+			<li><a href="#tools"><?php _e("Tools", 'import-html-pages'); ?></a></li>
 		</ul>
 		
 		
@@ -65,30 +73,38 @@ function html_import_options_page() { ?>
 							 	value="<?php esc_attr_e($options['root_directory']); ?>" class="widefloat" />
 							</label><br />
 							<span class="description">
-							<?php _e('This should be a full path from the server root, on the same server where WordPress 
-								is running now. Leave blank to upload a single file later.', 'import-html-pages'); ?><br />
-								<?php _e('Hint: the full path to this WordPress installation is: '); ?><kbd><?php echo ABSPATH; ?></kbd>
+								<?php _e('The absolute path to the files you want to import.', 'html-import-pages'); ?><br />
+								<?php printf(__('Hint: the absolute path to this WordPress installation is: %s', 'html-import-pages'), '<kbd>'.rtrim(ABSPATH, '/').'</kbd>'); ?>
 							</span>
 						</p></td>
 		        </tr>
 							
 				<tr valign="top">
-			        <th scope="row"><?php _e("Old URL", 'import-html-pages'); ?></th>
+			        <th scope="row"><?php _e("Old site URL", 'import-html-pages'); ?></th>
 			        <td><p><label><input type="text" name="html_import[old_url]" id="old_url" 
 						value="<?php esc_attr_e($options['old_url']); ?>" class="widefloat" /> </label><br />
 						<span class="description">
-						<?php _e('The old URL should correspond with your beginning directory. With this URL, 
-							.htaccess redirects will be generated for you.', 'import-html-pages'); ?>
+							<?php _e('This will be used only to generate accurate <kbd>.htaccess</kbd> redirects. The importer will not search for files here.', 'html-import-pages'); ?>
 						</span>
 					</p></td>
 		        </tr>
 		
 				<tr valign="top">
+			        <th scope="row"><?php _e("Default file", 'import-html-pages'); ?></th>
+			        <td><p><label><input type="text" name="html_import[index_file]" id="index_file" 
+						value="<?php esc_attr_e($options['index_file']); ?>" class="widefloat" /> </label><br />
+						<span class="description">
+						<?php _e("Enter the name of the default file (index.html, default.htm) for directories on this server.", 'import-html-pages'); ?>
+						</span>
+					</p></td>
+		        </tr>
+				
+				<tr valign="top">
 			        <th scope="row"><?php _e("File extensions to include", 'import-html-pages'); ?></th>
 			        <td><p><label><input type="text" name="html_import[file_extensions]" id="file_extensions" 
 						value="<?php esc_attr_e($options['file_extensions']); ?>" class="widefloat" /> </label><br />
 						<span class="description">
-						<?php _e("Enter file extensions without periods, separated by commas. All other file types will 
+						<?php _e("File extensions, without periods, separated by commas. All other file types will 
 							be ignored.", 'import-html-pages'); ?>
 						</span>
 					</p></td>
@@ -99,7 +115,7 @@ function html_import_options_page() { ?>
 			        <td><p><label><input type="text" name="html_import[skipdirs]" id="skipdirs" 
 						value="<?php esc_attr_e($options['skipdirs']); ?>" class="widefloat" />  </label><br />
 						<span class="description">
-						<?php _e("Enter directory names, without slashes, separated by commas. All files in these directories 
+						<?php _e("Directory names, without slashes, separated by commas. All files in these directories 
 							will be ignored.", 'import-html-pages'); ?>
 						</span>
 					</p></td>
@@ -154,36 +170,42 @@ function html_import_options_page() { ?>
 				</table><td>
 				</tr>
 				
-				<tr id="content-region" <?php if ($options['import_content'] == 'region') echo "style=display:block;"; ?>>
+				<tr id="content-region" <?php if ($options['import_content'] == 'region') echo "style=display:table-row;"; ?>>
 					<th></th>
-					<td>
+					<td colspan="3">
 						<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
-				        <input type="text" name="html_import[content_region]" id="content_region" value="<?php esc_attr_e($options['content_region']); ?>" />  
+				        <input type="text" name="html_import[content_region]" value="<?php esc_attr_e($options['content_region']); ?>" />  
 				        </label><br />
 				        <span class="description"><?php _e("The name of the editable region (e.g. 'Main Content')", 'import-html-pages'); ?></span>
 					</td>
 				</tr>
 				<tr>
-					<th><?php _e("Convert character set to UTF-8", 'import-html-pages'); ?> </th>
-					<td>
-					<label><input name="html_import[encode]" id="encode" value="1" type="checkbox" 
-						<?php checked($options['encode']); ?> /> </label>
-					<span class="description"><?php // _e("Check this option if your special characters are not imported correctly.", 'import-html-pages'); ?></span>
-				</td></tr>
-				<tr>
-				<th><?php _e("Use meta description as excerpt", 'import-html-pages'); ?></th>
+				<th><?php _e("More content options", 'import-html-pages'); ?></th>
 				<td>
-					<label><input name="html_import[meta_desc]" id="meta_desc" value="1" type="checkbox" <?php checked($options['meta_desc']); ?> /> 
-						 </label>
-					<span class="description"><?php /* printf(__('Excerpts will be stored for both posts and pages. However, to edit and/or display excerpts for pages, you will need to install a plugin such as <a href="%s">PJW Page Excerpt</a>
-	or <a href="%s">Excerpt Editor</a>.', 'import-html-pages'), 'http://blog.ftwr.co.uk/wordpress/page-excerpt/', 'http://www.laptoptips.ca/projects/wordpress-excerpt-editor/'); */ ?></span>
+					<label><input name="html_import[import_images]" id="import_images"  type="checkbox" value="1" 
+						<?php checked($options['import_images'], '1'); ?> /> <?php _e("Import linked images", 'import-html-pages'); ?></label>
 				</td>
 				</tr>
 				<tr>
-				<th><?php _e("Clean up bad (Word, Frontpage) HTML", 'import-html-pages'); ?></th>
+				<th></th>
+				<td>
+					<label><input name="html_import[meta_desc]" id="meta_desc" value="1" type="checkbox" <?php checked($options['meta_desc']); ?> /> 
+						 <?php _e("Use meta description as excerpt", 'import-html-pages'); ?></label>
+				</td>
+				</tr>
+				<tr>
+				<th></th>
+				<td>
+					<label><input name="html_import[encode]" id="encode"  type="checkbox" value="1" 
+						<?php checked($options['encode'], '1'); ?> /> <?php _e("Convert special characters (accents and symbols)", 'import-html-pages'); ?> </label>
+				</td>
+				</tr>
+				<tr>
+				<th></th>
 				<td>
 					<label><input name="html_import[clean_html]" id="clean_html"  type="checkbox" value="1" 
-						<?php checked($options['clean_html'], '1'); ?> onclick="jQuery(this).is(':checked') && jQuery('.clean-region').show('fast') || jQuery('.clean-region').hide('fast');" /> </label>
+						<?php checked($options['clean_html'], '1'); ?> onclick="jQuery(this).is(':checked') && jQuery('.clean-region').show('fast') || jQuery('.clean-region').hide('fast');" />
+						<?php _e("Clean up bad (Word, Frontpage) HTML", 'import-html-pages'); ?> </label>
 				</td>
 				</tr>
 				<tr class="clean-region" <?php if ($options['clean_html'] == '1') echo "style=display:table-row;"; ?>>
@@ -200,6 +222,9 @@ function html_import_options_page() { ?>
 			                &lt;ul&gt;
 			                &lt;ol&gt;
 			                &lt;li&gt;
+							&lt;dl&gt;
+							&lt;dt&gt;
+							&lt;dd&gt;
 			                &lt;blockquote&gt;
 			                &lt;cite&gt;
 			                &lt;em&gt;
@@ -230,7 +255,7 @@ function html_import_options_page() { ?>
 					<tr class="clean-region" <?php if ($options['clean_html'] == '1') echo "style=display:table-row;"; ?>>
 					<th><?php _e("Allowed attributes", 'import-html-pages'); ?></th>
 			            <td><label>
-				 			<input type="text" name="allow_attributes" id="allow_attributes" 
+				 			<input type="text" name="html_import[allow_attributes]" id="allow_attributes" 
 								value="<?php esc_attr_e($options['allow_attributes']); ?>" class="widefloat" />  </label><br />
 			            <span class="description"><?php _e("Enter attributes separated by commas. All attributes not listed here will be removed. <br />Suggested: href,src,alt,title<br />
 			    			<em>If you have data tables, also include:</em> summary,rowspan,colspan,span", 'import-html-pages'); ?></span>
@@ -286,11 +311,11 @@ function html_import_options_page() { ?>
 			</table><td>
 			</tr>
 			
-			<tr id="title-region" <?php if ($options['import_content'] == 'region') echo "style=display:table-row;"; ?>>
+			<tr id="title-region" <?php if ($options['import_title'] == 'region') echo "style=display:table-row;"; ?>>
 				<th></th>
-				<td>
+				<td colspan="3">
 					<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
-			        <input type="text" name="html_import[content_region]" id="content_region" value="<?php esc_attr_e($options['content_region']); ?>" />  
+			        <input type="text" name="html_import[title_region]" id="title_region" value="<?php esc_attr_e($options['title_region']); ?>" />  
 			        </label><br />
 			        <span class="description"><?php _e("The name of the editable region (e.g. 'Page Title')", 'import-html-pages'); ?></span>
 				</td>
@@ -298,7 +323,7 @@ function html_import_options_page() { ?>
 			<tr>
 				<th><?php _e("Phrase to remove from page title: ", 'import-html-pages'); ?></th>
 				<td>
-					<label><input type="text" name="html[remove_from_title]" id="remove_from_title" value="<?php esc_attr_e($options['remove_from_title']); ?>" class="widefloat" />  </label><br />
+					<label><input type="text" name="html_import[remove_from_title]" id="remove_from_title" value="<?php esc_attr_e($options['remove_from_title']); ?>" class="widefloat" />  </label><br />
 					<span class="description"><?php _e("Any common title phrase (such as the site name, which most themes will print automatically)", 'import-html-pages'); ?></span>
 				</td>
 			</tr>
@@ -316,15 +341,15 @@ function html_import_options_page() { ?>
 					<?php
 					// support all public post types
 					$typeselect = '';
-					$post_types = get_post_types(array('public'=>true));
+					$post_types = get_post_types(array('public' => true), 'objects');
 					foreach ($post_types as $post_type) {
-						if ($post_type != 'attachment') {
-							$typeselect .= '<label><input name="type" type="radio" value="' . esc_attr($post_type) . '" '.checked($options['type'], $post_type);
-							if (is_post_type_hierarchical($post_type))
+						if ($post_type->name != 'attachment') {
+							$typeselect .= '<label><input name="html_import[type]" type="radio" value="' . esc_attr($post_type->name) . '" '.checked($options['type'], $post_type->name, false);
+							if (is_post_type_hierarchical($post_type->name))
 								$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').show('fast');\"";
 							else
 								$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').hide('fast');\"";
-							$typeselect .= '> '.$post_type.'</label> &nbsp;&nbsp;';
+							$typeselect .= '> '.esc_html($post_type->labels->name).'</label> &nbsp;&nbsp;';
 						}
 					}
 					echo $typeselect; 
@@ -355,7 +380,7 @@ function html_import_options_page() { ?>
 			<tr>
 			<th><?php _e("Set author to", 'import-html-pages'); ?></th>
 			<td>
-				<?php wp_dropdown_users(array('selected' => $options['user'], 'name' => 'html_import[user]')); ?>
+				<?php wp_dropdown_users(array('selected' => $options['user'], 'name' => 'html_import[user]', 'who' => 'authors')); ?>
 			</td>
 			</tr>
 			<tr id="hierarchy" <?php if (!is_post_type_hierarchical($options['type'])) echo "style=display:none;"; ?>>
@@ -386,19 +411,21 @@ function html_import_options_page() { ?>
 					<?php foreach ( $taxonomies as $tax ) :
 						if (!is_taxonomy_hierarchical($tax->name)) :
 						// non-hierarchical
-							$nonhierarchical .= '<p class="taginput"><label>'.esc_html($tax->label).'<br />';
+							$nonhierarchical .= '<p class="taxoinput"><label>'.esc_html($tax->label).'<br />';
 							$nonhierarchical .= '<input type="text" name="html_import['.esc_attr($tax->name).']" 
 							 	value="'.esc_attr($options[$tax->name]).'" /></label></p>';
 						else:
 						// hierarchical 
 						?>
-						 	<div class="categorychecklistbox">
-								<label><?php echo esc_html($tax->label); ?><br />
-					        <ul class="categorychecklist">
+						 	<div class="taxochecklistbox">
+								<?php echo esc_html($tax->label); ?><br />
+					        <ul class="taxochecklist">
 					     	<?php
+							if (!isset($options[$tax->name])) $selected = '';
+							else $selected = $options[$tax->name];
 							wp_terms_checklist(0, array(
 								           'descendants_and_self' => 0,
-								           'selected_cats' => $options[$tax->name],
+								           'selected_cats' => $selected,
 								           'popular_cats' => false,
 								           'walker' => new HTML_Import_Walker_Category_Checklist,
 								           'taxonomy' => $tax->name,
@@ -414,11 +441,41 @@ function html_import_options_page() { ?>
 					?>
 			</div>
 			<?php endif; ?>
-		</div>
+			
+					
 		
+		<!-- TOOLS -->
+		
+		<h3><?php _e("Tools", 'import-html-pages'); ?></h3>				
+			<table class="form-table ui-tabs-panel" id="tools">
+		        <tr valign="top">
+			        <th scope="row"><?php _e("Regenerate <kbd>.htaccess</kbd> redirects", 'import-html-pages'); ?></th>
+			        <td><p><?php printf(__('If you <a href="%s">changed your permalink structure</a> after you imported files, you can <a href="%s">regenerate the redirects</a>.', 'import-html-pages'), 'wp-admin/options-permalink.php', wp_nonce_url( 'admin.php?import=html&step=2', 'html_import_regenerate' )) ?></p></td>
+		        </tr>
+				<tr valign="top">
+			        <th scope="row"><?php _e("Other helpful plugins", 'import-html-pages'); ?></th>
+					<td>
+						<p><?php printf(__('<a href="%s">Broken Link Checker</a> finds broken links and references to missing media files. Since the importer does not handle links or media files other than images, you should run this to see what else needs to be copied or updated from your old site.', 'import-html-pages'), 'http://wordpress.org/extend/plugins/broken-link-checker/'); ?></p>
+						<p><?php printf(__('<a href="%s">Search and Replace</a> helps you fix many broken links at once, if you have many links to the same files or if there is a pattern (like <kbd>&lt;a href="../../files"&gt;</kbd>) to your broken links.', 'import-html-pages'), 'http://wordpress.org/extend/plugins/search-and-replace/'); ?></p>
+						<p><?php printf(__('<a href="%s">Redirection</a> provides a nice admin interface for managing redirects. If you would rather not edit your <kbd>.htaccess</kbd> file, or if you just want to redirect one or two of your old pages, you can ignore the redirects generated by the importer. Instead, copy the post\'s old URL from the custom fields and paste it into Redirection\'s options.', 'import-html-pages'), 'http://wordpress.org/extend/plugins/redirection/'); ?></p>
+						<p><?php printf(__('<a href="%s">Add from Server</a> lets you import media files that are on your server but not part of the WordPress media library.', 'import-html-pages'), 'http://wordpress.org/extend/plugins/add-from-server/'); ?></p>
+						<p><?php printf(__('<a href="%s">Add Linked Images to Gallery</a> is helpful if you have imported data using other plugins and you would like to import linked images. However, it handles only images that are referenced with complete URLs; relative paths will not work.', 'import-html-pages'), 'http://wordpress.org/extend/plugins/add-linked-images-to-gallery-v01/'); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th><?php _e( 'Donate', 'import-html-pages' ) ?></th>
+					<td>
+						<p><?php printf(__('If this importer has saved you hours of copying and pasting, a <a href="%s">donation toward future development</a> would be much appreciated!', 'import-html-pages'), 'http://sillybean.net/code/wordpress/html-import-2/'); ?></p>
+					</td>
+			</table>
+			
+	
+	</div>	<!-- UI tabs wrapper -->	
 			<p class="submit">
 				<input type="submit" class="button-primary" value="<?php _e('Save settings', 'import-html-pages') ?>" />
+				<?php if (!$options['firstrun']) { ?>
 				<a href="admin.php?import=html" class="button-secondary">Import files</a>
+				<?php } ?>
 			</p>
 		</form>
 	</div> <!-- .ui-tabs -->
@@ -432,39 +489,147 @@ function html_import_options_page() { ?>
 			});
 			$(".ui-tabs").tabs({ fx: { opacity: "toggle", duration: "fast" } });
 		});
-	</script>    
-	
+	</script>
 	<?php 
 }
 
-function html_import_sanitize_options($input) {
-	$msg = '';
-	$type = 'error';
-	// Validation goes here. Append errors to $msg.
+function html_import_validate_options($input) {
+	// Validation/sanitization. Add errors to $msg[].
+	$msg = array();
+	$linkmsg = '';
+	$msgtype = 'error';
 	
-	// trim the extensions, skipped dirs, post tags, tag/attr/value
-	// if post type is post and default category wasn't set, set it
+	// sanitize path for Win32
+	$input['root_directory'] = str_replace('\\' ,'/', $input['root_directory']); 
+	$input['root_directory'] = preg_replace('|/+|', '/', $input['root_directory']);
+	
+	if (validate_import_file($input['root_directory']) > 0) {
+		$msg[] = __("The beginning directory you entered is not an absolute path. Relative paths are not allowed here.", 'import-html-pages');
+		$input['root_directory'] = ABSPATH.__('html-files-to-import', 'import-html-pages');
+	}
+/*	// removed for Win32 compatibility
+	elseif (!file_exists($input['root_directory'])) {
+		$msg[] = __("The beginning directory you entered is not readable. Please check its permissions and try again. (You may ignore this warning if you plan to upload a single file to import.)", 'import-html-pages');
+		$input['root_directory'] = ABSPATH.__('html-files-to-import', 'import-html-pages');
+	}
+*/		
+	$input['root_directory'] = rtrim($input['root_directory'], '/');
+	$input['old_url'] = esc_url(rtrim($input['old_url'], '/'));
+	
+	// trim the extensions, skipped dirs, allowed attributes. Invalid ones will not cause problems.
+	$input['file_extensions'] = str_replace('.', '', $input['file_extensions']);
+	$input['file_extensions'] = str_replace(' ', '', $input['file_extensions']);
+	$input['skipdirs'] = str_replace(' ', '', $input['skipdirs']);
+	$input['allow_tags'] = str_replace('/', '', $input['allow_tags']);
+	$input['allow_tags'] = str_replace(' ', '', $input['allow_tags']);
+	$input['allow_attributes'] = str_replace(' ', '', $input['allow_attributes']);
+	
+	if ( !in_array($input['status'], get_post_stati()) ) 
+		$input['status'] = 'publish';
+	
+	$post_types = get_post_types(array('public' => true),'names');
+	if (!in_array($input['type'], $post_types))
+		$input['type'] = 'page';
+		
+	if (!in_array( $input['timestamp'], array('now', 'filemtime')))
+		$input['timestamp'] = 'filemtime';
+		
+	if (!in_array($input['import_content'], array('tag', 'region')))
+		$input['import_content'] = 'tag';
+	if (!in_array($input['import_title'], array('tag', 'region')))
+		$input['import_title'] = 'tag';
+	
+	// trim region/tag/attr/value
+	if (!empty($input['content_region']))	$input['content_region'] = 	trim($input['content_region']);
+	if (!empty($input['content_tag']))		$input['content_tag'] = 	trim($input['content_tag']);
+	if (!empty($input['content_tagatt']))	$input['content_tagatt'] = 	trim($input['content_tagatt']);
+	if (!empty($input['content_attval']))	$input['content_attval'] = 	esc_attr(trim($input['content_attval']));
+	if (!empty($input['title_region']))		$input['title_region'] = 	trim($input['title_region']);
+	if (!empty($input['title_tag']))		$input['title_tag'] = 		trim($input['title_tag']);
+	if (!empty($input['title_tagatt']))		$input['title_tagatt'] = 	trim($input['title_tagatt']);
+	if (!empty($input['title_attval']))		$input['title_attval'] = 	esc_attr(trim($input['title_attval']));
+	
+	// must have something to look for in the HTML
+	if ($input['import_content'] == 'tag' && empty($input['content_tag']))
+		$msg[] = __("You did not enter an HTML content tag to import.", 'import-html-pages');
+	if ($input['import_content'] == 'region' && empty($input['content_region']))
+		$msg[] = __("You did not enter a Dreamweaver content template region to import.", 'import-html-pages');
+	if ($input['import_title'] == 'tag' && empty($input['title_tag']))
+		$msg[] = __("You did not enter an HTML title tag to import.", 'import-html-pages');
+	if ($input['import_title'] == 'region' && empty($input['title_region']))
+		$msg[] = __("You did not enter a Dreamweaver title template region to import.", 'import-html-pages');
+		
+	if (!isset($input['root_parent']))
+		$input['root_parent'] = 0;
+	
+	// $input['remove_from_title'] could be anything, including unencoded characters or HTML tags
+	// it's a search pattern; leave it alone
+	
+	// these should all be zero or one
+	$input['clean_html'] = absint($input['clean_html']);
+	if ($input['clean_html'] > 1) $input['clean_html'] = 0;
+	$input['encode'] = absint($input['encode']);
+	if ($input['encode'] > 1) $input['encode'] = 0;
+	$input['meta_desc'] = absint($input['meta_desc']);
+	if ($input['meta_desc'] > 1) $input['meta_desc'] = 1;
+	
+	// see if this is a real user
+	$input['user'] = absint($input['user']);
+	$user_info = get_userdata($input['user']);
+	if ($user_info === false) {
+		$msg[] = "The author you specified does not exist.";
+		$currentuser = wp_get_current_user();
+		$input['user'] = $currentuser->ID;
+	}
+		
+	// If settings have been saved at least once, we can turn this off.
+	$input['firstrun'] = false;
+	
+	
+	// Send custom updated message
+	$msg = implode('<br />', $msg);
 	
 	if (empty($msg)) {
-		$msg = sprintf(__('Settings saved. <a href="%s">Ready to import files?</a>'), 'admin.php?import=html');
-/*
-		$msg .= '<pre>';
-		$msg .= print_r($input, true);
-		$msg .= '</pre>';
-/**/
-		$type = 'updated';
+		
+		$linkstructure = get_option('permalink_structure');
+		if (empty($linkstructure))
+			$linkmsg = sprintf(__('If you intend to <a href="%s">set a permalink structure</a>, you should do it 
+				before importing so the <kbd>.htaccess</kbd> redirects will be accurate.', 'import-html-pages'), 'options-permalink.php');
+		
+		$msg = sprintf(__('Settings saved. %s <a href="%s">Ready to import files?</a>', 'import-html-pages'), 
+				$linkmsg, 'admin.php?import=html');
+		// $msg .= '<pre>'. print_r($input, false) .'</pre>';
+		$msgtype = 'updated';
 	}
-	// Custom updated message
-	add_settings_error( 'html_import', 'html_import', $msg, $type );
+	
+	add_settings_error( 'html_import', 'html_import', $msg, $msgtype );
 	return $input;
+}
+
+// custom file validator to accommodate Win32 paths starting with drive letter
+// based on WP's validate_file()
+function validate_import_file( $file, $allowed_files = '' ) {
+   if ( false !== strpos( $file, '..' ))
+       return 1;
+
+    if ( false !== strpos( $file, './' ))
+       return 1;
+
+   if (!empty ( $allowed_files ) && (!in_array( $file, $allowed_files ) ) )
+       return 3;
+/*
+    if (':' == substr( $file, 1, 1 ))
+        return 2;
+*/
+   return 0;
 }
 
 // custom walker so we can change the name attribute of the category checkboxes (until #16437 is fixed)
 // mostly a duplicate of Walker_Category_Checklist
 class HTML_Import_Walker_Category_Checklist extends Walker {
      var $tree_type = 'category';
-     var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); //TODO: decouple this
- 
+     var $db_fields = array ('parent' => 'parent', 'id' => 'term_id'); 
+
  	function start_lvl(&$output, $depth, $args) {
          $indent = str_repeat("\t", $depth);
          $output .= "$indent<ul class='children'>\n";
