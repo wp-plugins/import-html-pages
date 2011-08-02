@@ -76,6 +76,8 @@ The skipped directory setting just tells the importer where to look for HTML fil
 
 = 2.0 =
 This version requires at least WP 3.0. Now handles linked images, single file uploads, and custom post types and taxonomies.
+= 2.0.1 =
+2.0 requires at least WP 3.0. Now handles linked images, single file uploads, and custom post types and taxonomies. 2.0.1 adds an option to set the page template for hierarchical post types.
 
 == Changelog ==
 
