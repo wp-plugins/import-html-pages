@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import-2/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 2.0.2
+Stable tag: 2.1
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -33,6 +33,7 @@ Options in 2.0:
 * choose status, author, and timestamp
 * use meta descriptions as excerpts
 * clean up imported HTML and strip unwanted tags and attributes
+* fix internal links in imported files to match new permalinks
 
 See the <a href="http://sillybean.net/code/wordpress/html-import-2/user-guide/">User Guide</a> for details on all the options.
 
