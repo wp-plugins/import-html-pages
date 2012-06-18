@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import-2/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 3.0
 Tested up to: 3.2.1
-Stable tag: 2.1
+Stable tag: 2.2
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -83,11 +83,13 @@ This version requires at least WP 3.0. Now handles linked images, single file up
 Added some helpers to work around servers that do not support PHP's multibyte string functions.
 = 2.1 =
 Now includes an option to fix internal links.
+= 2.2 =
+Now imports media files other than images.
 
 == Changelog ==
 
-= 2.2a =
-* Now imports media files other than images.
+= 2.2 =
+* Now imports media files other than images. Uses `rawurldecode()` to remove junk like `%20` from file names, and thus should now handle situations where your link is something like `my%20file.doc` and your file is actually called `my file.doc`. 
 * Now handles images with https srcs.
 * Removed a pointless security check that was preventing people from uploading valid image files.
 = 2.1 =

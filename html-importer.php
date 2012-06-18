@@ -204,7 +204,7 @@ class HTML_Import extends WP_Importer {
 		$outPath = str_replace('http:/', 'http://', $outPath);
 		$outPath = str_replace('https:/', 'https://', $outPath);
 		$outPath = str_replace(':///', '://', $outPath);
-		return $outPath;
+		return rawurldecode($outPath);
 	}
 	
 	function clean_html( $string, $allowtags = NULL, $allowattributes = NULL ) {
@@ -279,29 +279,6 @@ class HTML_Import extends WP_Importer {
 					}
 				}
 			}
-/*			
-			elseif ($options['import_documents']) {
-				$mimes = get_allowed_mime_types();
-				$mimes = array_flip($mimes);
-				$doctypes = array_diff($this->allowed, $mimes);
-				if (in_array($ext, $doctypes)) {  // allowed upload types only
-					//  load the file from $linkpath
-					$fileid = $this->handle_import_media_file($linkpath, $id);
-					if ( is_wp_error( $fileid ) )
-						echo '<span class="attachment_error">'.$fileid>get_error_message().'</span>';
-					else {
-						$filepath = wp_get_attachment_url($fileid);
-
-						//  replace paths in the content
-						if (!is_wp_error($filepath)) {			
-							$content = str_replace($href, $filepath, $content);
-							$update = true;
-						}
-
-					} // is_wp_error else
-				}
-			}
-/**/
 	      }
 
 	      elseif(is_dir($path) && is_readable($path)) { 
