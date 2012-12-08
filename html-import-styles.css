@@ -16,11 +16,9 @@ td.taginput { width: 33%; vertical-align: top; }
 .clean-region th { text-indent: 2em; }
 body.settings_page_html-import #footer { display: none; }
 /* jQuery tabs */
-.ui-tabs-nav { border-bottom: 1px solid #ccc; height: 27px; margin: 20px 0; padding: 0; }
-.ui-tabs-nav li { display: block; float: left; margin: 0; }
-.ui-tabs-nav li a { padding: 4px 20px 6px; font-weight: bold; }
-.ui-tabs-nav li a { border-style: solid; border-color: #CCC #CCC #F9F9F9; border-width: 1px 1px 0; color: #464646; text-shadow: rgba(255, 255, 255, 1) 0 1px 0; display: inline-block; padding: 4px 14px 6px; text-decoration: none; margin: 0 6px -1px 0; -moz-border-radius: 5px 5px 0 0; -webkit-border-top-left-radius: 5px; -webkit-border-top-right-radius: 5px; -khtml-border-top-left-radius: 5px; -khtml-border-top-right-radius: 5px; border-top-left-radius: 5px; border-top-right-radius: 5px; }
-.ui-tabs-nav li.ui-tabs-selected, .ui-tabs-nav li.ui-state-active { padding-bottom: 1px; background: #fff; }
-.ui-tabs-nav li.ui-tabs-selected a, .ui-tabs-nav li.ui-state-active a { border-width: 1px; color: #21759b; /* WP blue */ }
-.ui-tabs-panel { clear: both; }
-.wrap h3 /*, .wrap div.ui-tabs-panel */ { display: none; }
+.ui-tabs-nav { margin: 0; padding: 0; }
+.ui-tabs-nav li { display: inline; }
+.ui-tabs-nav li a { color: #aaa; }
+ul.ui-tabs-nav li.ui-tabs-active a.nav-tab { border-bottom: 1px solid #fff; color: #464646; }
+.ui-tabs-panel, .ui-tabs { clear: both; }
+.wrap h3, a.button-secondary.hidden { display: none; }

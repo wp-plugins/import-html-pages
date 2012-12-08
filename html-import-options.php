@@ -7,12 +7,12 @@ function html_import_get_options() {
 		'index_file' => 'index.html',
 		'file_extensions' => 'html,htm,shtml',
 		'skipdirs' => __('images,includes,Templates', 'import-html-pages'),
-		'preserve_slugs' => 1,
+		'preserve_slugs' => 0,
 		'status' => 'publish',
 		'root_parent' => 0,
 		'type' => 'page',
 		'timestamp' => 'filemtime',
-		'import_content' => 'tag',
+		'import_content' => 0,
 		'content_region' => '',
 		'content_tag' => __('div', 'import-html-pages'),
 		'content_tagatt' => __('id', 'import-html-pages'),
@@ -25,7 +25,7 @@ function html_import_get_options() {
 		'import_documents' => 0,
 		'document_mimes' => 'rtf,doc,docx,xls,xlsx,csv,ppt,pps,pptx,ppsx,pdf,zip,wmv,avi,flv,mov,mpeg,mp3,m4a,wav',
 		'fix_links' => 0,
-		'import_title' => 'tag',
+		'import_title' => 0,
 		'title_region' => '',
 		'title_tag' => __('title', 'import-html-pages'),
 		'title_tagatt' => '',
@@ -35,6 +35,17 @@ function html_import_get_options() {
 		'user' => 0,
 		'page_template' => 0,
 		'firstrun' => true,
+		'import_date' => 0,
+		'date_region' => '',
+		'date_tag' => __('div', 'import-html-pages'),
+		'date_tagatt' => __('id', 'import-html-pages'),
+		'date_attval' => __('date', 'import-html-pages'),
+		'import_field' => array('0'),
+		'customfield_name' => array(''),
+		'customfield_region' => array(''),
+		'customfield_tag' => array(__('div', 'import-html-pages')),
+		'customfield_tagatt' => array(__('class', 'import-html-pages')),
+		'customfield_attval' => array(__('fieldclass', 'import-html-pages')),
 	);
 	$options = get_option('html_import');
 	if (!is_array($options)) $options = array();
@@ -43,34 +54,41 @@ function html_import_get_options() {
 
 function html_import_options_page() { ?>
 	<div class="wrap">
-		<h2><?php _e( 'HTML Import Settings', 'import-html-pages'); ?></h2>
-		
+	
 		<form method="post" id="html_import" action="options.php">
 			<?php 
 			settings_fields('html_import');
 			get_settings_errors( 'html_import' );	
 			settings_errors( 'html_import' );
-			$options = get_option('html_import');
-			
-			if ($options['firstrun'] === true) {
-			echo '<p>'.sprintf(__('Welcome to HTML Import! This is a complicated importer with many options. Please look through all the tabs on this page before running your import.', 'import-html-pages'), 'options-general.php?page=html-import.php').'</p>'; 
-			}
+			$options = html_import_get_options();
+			//$msg .= '<pre>'. print_r($options, true) .'</pre>';
+			//echo esc_html( $msg );
 			?>
 
 	<div class="ui-tabs">
+		
+		
+		<h2><?php _e( 'HTML Import Settings', 'import-html-pages'); ?></h2>
+		<?php
+		if ($options['firstrun'] === true) {
+		echo '<p>'.sprintf(__('Welcome to HTML Import! This is a complicated importer with many options. Please look through all the tabs on this page before running your import.', 'import-html-pages'), 'options-general.php?page=html-import.php').'</p>'; 
+		}
+		?>
+		<h2 class="nav-tab-wrapper">
 		<ul class="ui-tabs-nav">
-			<li><a href="#files"><?php _e("Files", 'import-html-pages'); ?></a></li>
-			<li><a href="#content"><?php _e("Content", 'import-html-pages'); ?></a></li>
-			<li><a href="#title"><?php _e("Title", 'import-html-pages'); ?></a></li>
-			<li><a href="#metadata"><?php _e("Metadata", 'import-html-pages'); ?></a></li>
-			<li><a href="#taxonomies"><?php _e("Categories, Tags, Taxonomies", 'import-html-pages'); ?></a></li>
-			<li><a href="#tools"><?php _e("Tools", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-1"><?php _e("Files", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-2"><?php _e("Content", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-3"><?php _e("Title &amp; Metadata", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-4"><?php _e("Custom Fields", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-5"><?php _e("Categories &amp; Tags", 'import-html-pages'); ?></a></li>
+			<li><a class="nav-tab" href="#tabs-6"><?php _e("Tools", 'import-html-pages'); ?></a></li>
 		</ul>
+		</h2>
 		
 		
 		
 		<!-- FILES -->
-		
+		<div id="tabs-1">
 		<h3><?php _e("Files", 'import-html-pages'); ?></h3>				
 			<table class="form-table ui-tabs-panel" id="files">
 		        <tr valign="top">
@@ -141,30 +159,33 @@ function html_import_options_page() { ?>
 		        </tr>
 		    </table>
 		
-		
+		</div>
 
 		<!-- CONTENT -->	
-		
+		<div id="tabs-2">
 		<h3><?php _e("Content", 'import-html-pages'); ?></h3>				
 			<table class="form-table ui-tabs-panel" id="content">
-				<tr valign="top">
+				<tr valign="top" id="contentselect">
 			        <th scope="row"><?php _e("Select content by", 'import-html-pages'); ?></th>
 			        <td><p><label>
 						<input type="radio" name="html_import[import_content]"
-							value="tag" <?php checked($options['import_content'], 'tag'); ?> 
-							onclick="javascript: jQuery('#content-region').hide('fast'); jQuery('#content-tag').show('fast');" />
+							value="tag" <?php checked($options['import_content'], 'tag'); ?> class="showrow" title="content" />
   						<?php _e('HTML tag', 'import-html-pages'); ?></label> 
 						&nbsp;&nbsp;
 						<label>
 						<input type="radio" name="html_import[import_content]"
-							value="region" <?php checked($options['import_content'], 'region'); ?> 
-							onclick="javascript: jQuery('#content-tag').hide('fast'); jQuery('#content-region').show('fast');" />
+							value="region" <?php checked($options['import_content'], 'region'); ?> class="showrow" title="content" />
 	  					<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
-					</p></td>
-		        </tr>
-				<tr id="content-tag" <?php if ($options['import_content'] == 'region') echo "style=display:none;"; ?>>
-					<th class="taginput"></th>
-					<td><table>
+						&nbsp;&nbsp;
+						<label>
+						<input type="radio" name="html_import[import_content]"
+							value="file" <?php checked($options['import_content'], 'file'); ?> class="showrow" title="content" />
+	  					<?php _e('Import entire file', 'import-html-pages'); ?></label>
+					</p>
+					
+					
+					<table>
+						<tr id="content-tag" <?php if ($options['import_content'] != 'tag') echo 'style="display: none;"'; ?>>
 				     	<td class="taginput">
 				            <label><?php _e("Tag", 'import-html-pages'); ?><br />
 				            <input type="text" name="html_import[content_tag]" id="content_tag" value="<?php echo esc_attr_e($options['content_tag']); ?>" />
@@ -186,11 +207,8 @@ function html_import_options_page() { ?>
 				            <br />
 				            <span class="description"><?php _e("Enter the attribute's value (such as width, ID, or class name) without quotes", 'import-html-pages'); ?></span>
 				        </td>
-				</table><td>
 				</tr>
-				
-				<tr id="content-region" <?php if ($options['import_content'] == 'region') echo "style=display:table-row;"; ?>>
-					<th></th>
+				<tr id="content-region" <?php if ($options['import_content'] != 'region') echo 'style="display: none;"'; ?>>
 					<td colspan="3">
 						<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
 				        <input type="text" name="html_import[content_region]" value="<?php esc_attr_e($options['content_region']); ?>" />  
@@ -198,6 +216,11 @@ function html_import_options_page() { ?>
 				        <span class="description"><?php _e("The name of the editable region (e.g. 'Main Content')", 'import-html-pages'); ?></span>
 					</td>
 				</tr>
+				</table>
+				
+					</td>
+		        </tr>
+
 				<tr>
 				<th><?php _e("More content options", 'import-html-pages'); ?></th>
 				<td>
@@ -208,11 +231,12 @@ function html_import_options_page() { ?>
 				<tr>
 				<th></th>
 				<td>
-					<label><input name="html_import[import_documents]" id="import_documents" value="1" type="checkbox" <?php checked($options['import_documents']); ?> onclick="jQuery(this).is(':checked') && jQuery('.mime-region').show('fast') || jQuery('.mime-region').hide('fast');" /> 
+					<label><input name="html_import[import_documents]" id="import_documents" value="1" type="checkbox" <?php checked($options['import_documents']); ?> class="toggle" /> 
 						 <?php _e("Import linked documents", 'import-html-pages'); ?></label>
 				</td>
 				</tr>
-				<tr class="mime-region" <?php if ($options['document_mimes'] == '1') echo "style=display:table-row;"; ?>>
+				<tr class="import_documents" 
+					<?php if (isset($options['import_documents']) && !$options['import_documents']) echo 'style="display:none;"'; ?>>
 				<th><?php _e("Allowed file types", 'import-html-pages'); ?></th>
 		            <td><label>
 			 			<input type="text" name="html_import[document_mimes]" id="document_mimes" 
@@ -245,11 +269,11 @@ function html_import_options_page() { ?>
 				<th></th>
 				<td>
 					<label><input name="html_import[clean_html]" id="clean_html"  type="checkbox" value="1" 
-						<?php checked($options['clean_html'], '1'); ?> onclick="jQuery(this).is(':checked') && jQuery('.clean-region').show('fast') || jQuery('.clean-region').hide('fast');" />
+						<?php checked($options['clean_html'], '1'); ?> class="toggle" />
 						<?php _e("Clean up bad (Word, Frontpage) HTML", 'import-html-pages'); ?> </label>
 				</td>
 				</tr>
-				<tr class="clean-region" <?php if ($options['clean_html'] == '1') echo "style=display:table-row;"; ?>>
+				<tr class="clean_html" <?php if (!$options['clean_html']) echo 'style="display:none;"'; ?>>
 				 
 			        	<th><?php _e("Allowed HTML", 'import-html-pages'); ?></th>
 			            <td>    <label>
@@ -293,7 +317,7 @@ function html_import_options_page() { ?>
 			                </span>
 			            </td> 
 					</tr>
-					<tr class="clean-region" <?php if ($options['clean_html'] == '1') echo "style=display:table-row;"; ?>>
+					<tr class="clean-region" <?php if (!$options['clean_html']) echo 'style="display:none;"'; ?>>
 					<th><?php _e("Allowed attributes", 'import-html-pages'); ?></th>
 			            <td><label>
 				 			<input type="text" name="html_import[allow_attributes]" id="allow_attributes" 
@@ -304,153 +328,336 @@ function html_import_options_page() { ?>
 			       </tr>
 			</table>
 			
-		
+		</div>
 
-		<!-- TITLE -->
-
-		<h3><?php _e("Title", 'import-html-pages'); ?></h3>				
+		<!-- TITLE AND META -->
+		<div id="tabs-3">
+		<h3><?php _e("Title &amp; Metadata", 'import-html-pages'); ?></h3>				
 		<table class="form-table ui-tabs-panel" id="title">
-			<tr valign="top">
+			<tr valign="top" id="titleselect">
 		        <th scope="row"><?php _e("Select title by", 'import-html-pages'); ?></th>
 		        <td><p><label>
 					<input type="radio" name="html_import[import_title]"
-						value="tag" <?php checked($options['import_title'], 'tag'); ?> 
-						onclick="javascript: jQuery('#title-region').hide('fast'); jQuery('#title-tag').show('fast');" />
+						value="tag" <?php checked($options['import_title'], 'tag'); ?> class="showrow" title="title" />
 					<?php _e('HTML tag', 'import-html-pages'); ?></label> 
 					&nbsp;&nbsp;
 					<label>
 					<input type="radio" name="html_import[import_title]"
-						value="region" <?php checked($options['import_title'], 'region'); ?> 
-						onclick="javascript: jQuery('#title-tag').hide('fast'); jQuery('#title-region').show('fast');" />
+						value="region" <?php checked($options['import_title'], 'region'); ?> class="showrow" title="title" />
   					<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
-				</p></td>
-	        </tr>
-			<tr id="title-tag" <?php if ($options['import_title'] == 'region') echo "style=display:none;"; ?>>
-				<th class="taginput"></th>
-				<td><table>
-			     	<td class="taginput">
-			            <label><?php _e("Tag", 'import-html-pages'); ?><br />
-			            <input type="text" name="html_import[title_tag]" id="title_tag" value="<?php echo esc_attr_e($options['title_tag']); ?>" />
-			            </label>
-			            <br />
-			            <span class="description"><?php _e("The HTML tag, without brackets", 'import-html-pages'); ?></span>
-					</td>
-					<td class="taginput">
-			            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
-			            <input type="text" name="html_import[title_tagatt]" id="title_tagatt" value="<?php esc_attr_e($options['title_tagatt']); ?>" />
-			            </label>
-			            <br />
-			            <span class="description"><?php _e("Leave blank to use a tag without an attribute, or when the attributes don't matter, such as &lt;title&gt;", 'import-html-pages'); ?></span>
-					</td>
-					<td class="taginput">
-			            <label><?php _e("= Value", 'import-html-pages'); ?><br />
-			            <input type="text" name="html_import[title_attval]" id="title_attval" value="<?php esc_attr_e($options['title_attval']); ?>" />
-			            </label>
-			            <br />
-			            <span class="description"><?php _e("Enter the attribute's value (such as width, ID, or class name) without quotes", 'import-html-pages'); ?></span>
-			        </td>
-			</table><td>
-			</tr>
-			
-			<tr id="title-region" <?php if ($options['import_title'] == 'region') echo "style=display:table-row;"; ?>>
-				<th></th>
-				<td colspan="3">
-					<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
-			        <input type="text" name="html_import[title_region]" id="title_region" value="<?php esc_attr_e($options['title_region']); ?>" />  
-			        </label><br />
-			        <span class="description"><?php _e("The name of the editable region (e.g. 'Page Title')", 'import-html-pages'); ?></span>
+					&nbsp;&nbsp;
+					<label>
+					<input type="radio" name="html_import[import_title]"
+						value="filename" <?php checked($options['import_title'], 'filename'); ?> class="showrow" title="title" />
+  					<?php _e('File name', 'import-html-pages'); ?></label>
+				</p>
+				
+				
+				<table>
+					<tr id="title-tag" style="display:none;">
+					     	<td class="taginput">
+					            <label><?php _e("Tag", 'import-html-pages'); ?><br />
+					            <input type="text" name="html_import[title_tag]" id="title_tag" value="<?php echo esc_attr_e($options['title_tag']); ?>" />
+					            </label>
+					            <br />
+					            <span class="description"><?php _e("The HTML tag, without brackets", 'import-html-pages'); ?></span>
+							</td>
+							<td class="taginput">
+					            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
+					            <input type="text" name="html_import[title_tagatt]" id="title_tagatt" value="<?php esc_attr_e($options['title_tagatt']); ?>" />
+					            </label>
+					            <br />
+					            <span class="description"><?php _e("Leave blank to use a tag without an attribute, or when the attributes don't matter, such as &lt;title&gt;", 'import-html-pages'); ?></span>
+							</td>
+							<td class="taginput">
+					            <label><?php _e("= Value", 'import-html-pages'); ?><br />
+					            <input type="text" name="html_import[title_attval]" id="title_attval" value="<?php esc_attr_e($options['title_attval']); ?>" />
+					            </label>
+					            <br />
+					            <span class="description"><?php _e("Enter the attribute's value (such as width, ID, or class name) without quotes", 'import-html-pages'); ?></span>
+					        </td>
+						</tr>
+
+
+						<tr id="title-region" style="display:none;">
+							<td colspan="3">
+								<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
+						        <input type="text" name="html_import[title_region]" id="title_region" value="<?php esc_attr_e($options['title_region']); ?>" />  
+						        </label><br />
+						        <span class="description"><?php _e("The name of the editable region (e.g. 'Page Title')", 'import-html-pages'); ?></span>
+							</td>
+						</tr>
+				</table>
+					
+
 				</td>
-			</tr>
-			<tr>
+	        </tr>
+	
+			<tr valign="top">
 				<th><?php _e("Phrase to remove from page title: ", 'import-html-pages'); ?></th>
 				<td>
 					<label><input type="text" name="html_import[remove_from_title]" id="remove_from_title" value="<?php esc_attr_e($options['remove_from_title']); ?>" class="widefloat" />  </label><br />
 					<span class="description"><?php _e("Any common title phrase (such as the site name, which most themes will print automatically)", 'import-html-pages'); ?></span>
 				</td>
 			</tr>
-		</table>
-		
-		
-
-		<!-- META -->
-
-		<h3><?php _e("Metadata", 'import-html-pages'); ?></h3>				
-		<table class="form-table ui-tabs-panel" id="metadata">
-			<tr valign="top">
-		        <th scope="row"><?php _e("Import files as", 'import-html-pages'); ?></th>
-		        <td>
-					<?php
-					// support all public post types
-					$typeselect = '';
-					$post_types = get_post_types(array('public' => true), 'objects');
-					foreach ($post_types as $post_type) {
-						if ($post_type->name != 'attachment') {
-							$typeselect .= '<label><input name="html_import[type]" type="radio" value="' . esc_attr($post_type->name) . '" '.checked($options['type'], $post_type->name, false);
-							if (is_post_type_hierarchical($post_type->name))
-								$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').show('fast');jQuery('#page-template').show('fast');\"";
-							else
-								$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').hide('fast');jQuery('#page-template').hide('fast');\"";
-							$typeselect .= '> '.esc_html($post_type->labels->name).'</label> &nbsp;&nbsp;';
+			
+				<tr valign="top">
+			        <th scope="row"><?php _e("Import files as", 'import-html-pages'); ?></th>
+			        <td>
+						<?php
+						// support all public post types
+						$typeselect = '';
+						$post_types = get_post_types(array('public' => true), 'objects');
+						foreach ($post_types as $post_type) {
+							if ($post_type->name != 'attachment') {
+								$typeselect .= '<label><input name="html_import[type]" type="radio" value="' . esc_attr($post_type->name) . '" '.checked($options['type'], $post_type->name, false);
+								if (is_post_type_hierarchical($post_type->name))
+									$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').show('fast');jQuery('#page-template').show('fast');\"";
+								else
+									$typeselect .= "onclick=\"javascript: jQuery('#hierarchy').hide('fast');jQuery('#page-template').hide('fast');\"";
+								$typeselect .= '> '.esc_html($post_type->labels->name).'</label> &nbsp;&nbsp;';
+							}
 						}
-					}
-					echo $typeselect; 
-					?>
+						echo $typeselect; 
+						?>
+					</td>
+		        </tr>
+				<tr>
+				<th><?php _e("Set status to", 'import-html-pages'); ?></th>
+				<td>
+					<select name="html_import[status]" id="status">
+				    	<option value="publish" <?php selected('publish', $options['status']); ?>><?php _e("publish", 'import-html-pages'); ?></option>
+				        <option value="draft" <?php selected('draft', $options['status']); ?>><?php _e("draft", 'import-html-pages'); ?></option>
+				        <option value="private" <?php selected('private', $options['status']); ?>><?php _e("private", 'import-html-pages'); ?></option>
+				        <option value="pending" <?php selected('pending', $options['status']); ?>><?php _e("pending", 'import-html-pages'); ?></option>
+				    </select>
+				</td>
+				</tr>
+				<tr>
+				<th><?php _e("Set timestamps to", 'import-html-pages'); ?></th>
+				<td>
+					<select name="html_import[timestamp]" id="timestamp">
+				    	<option value="now" <?php if ($options['timestamp'] == 'now') echo 'selected="selected"'; ?>><?php _e("now", 'import-html-pages'); ?></option>
+				        <option value="filemtime" <?php if ($options['timestamp'] == 'filemtime') echo 'selected="selected"'; ?>>
+							<?php _e("last time the file was modified", 'import-html-pages'); ?></option>
+						<option value="customfield" <?php if ($options['timestamp'] == 'customfield') echo 'selected="selected"'; ?>>
+							<?php _e("custom field", 'import-html-pages'); ?></option>
+				    </select>
+				</td>
+				</tr>
+				<tr>
+				<th><?php _e("Set author to", 'import-html-pages'); ?></th>
+				<td>
+					<?php wp_dropdown_users(array('selected' => $options['user'], 'name' => 'html_import[user]', 'who' => 'authors')); ?>
+				</td>
+				</tr>
+
+				<tr id="hierarchy" <?php if (!is_post_type_hierarchical($options['type'])) echo "style=display:none;"; ?>>
+				<th><?php _e("Import pages as children of: ", 'import-html-pages'); ?></th>
+				<td>
+			        <?php 
+			            $pages = wp_dropdown_pages(array('echo' => 0, 'selected' => $options['root_parent'], 'name' => 'html_import[root_parent]', 'show_option_none' => __('None (top level)', 'import-html-pages'), 'sort_column'=> 'menu_order, post_title'));
+			            if (empty($pages)) $pages = "<select name=\"root_parent\"><option value=\"0\">"._e('None (top level)', 'import-html-pages')."</option></select>";
+			            echo $pages;
+			        ?>
+				</td>
+				</tr>
+
+				<tr id="page-template" <?php if (!is_post_type_hierarchical($options['type'])) echo "style=display:none;"; ?>>
+				<th><?php _e("Template for imported pages: ", 'import-html-pages'); ?></th>
+				<td>
+			        <select name="html_import[page_template]" id="page_template">
+					<option value='0'><?php _e('Default Template'); ?></option>
+					<?php page_template_dropdown(); ?>
+					</select>
+				</td>
+				</tr>
+		</table>
+		</div>
+		
+
+		<!-- CUSTOM FIELDS -->
+		<div id="tabs-4">
+		<h3><?php _e("Custom Fields", 'import-html-pages'); ?></h3>				
+		<table class="form-table ui-tabs-panel striped" id="customfields">
+			<tbody>
+			<tr valign="top" id="customdatefield">
+		        <th scope="row"><?php _e("Select date by", 'import-html-pages'); ?></th>
+		        <td><p><label>
+					<input type="radio" name="html_import[import_date]"
+						value="tag" <?php checked($options['import_date'], 'tag'); ?> class="showrow" title="date" />
+					<?php _e('HTML tag', 'import-html-pages'); ?></label> 
+					&nbsp;&nbsp;
+					<label>
+					<input type="radio" name="html_import[import_date]"
+						value="region" <?php checked($options['import_date'], 'region'); ?> class="showrow" title="date" />
+  					<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
+				</p>
+				
+				
+				<table>
+					<tr id="date-tag" <?php if ($options['import_date'] != 'tag') echo 'style="display: none;"'; ?>>
+			     	<td class="taginput">
+			            <label><?php _e("Tag", 'import-html-pages'); ?><br />
+			            <input type="text" name="html_import[date_tag]" id="date_tag" value="<?php echo esc_attr_e($options['date_tag']); ?>" />
+			            </label>
+					</td>
+					<td class="taginput">
+			            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
+			            <input type="text" name="html_import[date_tagatt]" id="date_tagatt" value="<?php esc_attr_e($options['date_tagatt']); ?>" />
+			            </label>
+					</td>
+					<td class="taginput">
+			            <label><?php _e("= Value", 'import-html-pages'); ?><br />
+			            <input type="text" name="html_import[date_attval]" id="date_attval" value="<?php esc_attr_e($options['date_attval']); ?>" />
+			            </label>
+			        </td>
+			</tr>
+			<tr id="date-region" <?php if ($options['import_date'] != 'region') echo 'style="display: none;"'; ?>>
+				<td colspan="3">
+					<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
+			        <input type="text" name="html_import[date_region]" value="<?php esc_attr_e($options['date_region']); ?>" />  
+			        </label>
+				</td>
+			</tr>
+			</table>
+			
 				</td>
 	        </tr>
-			<tr>
-			<th><?php _e("Set status to", 'import-html-pages'); ?></th>
-			<td>
-				<select name="html_import[status]" id="status">
-			    	<option value="publish" <?php selected('publish', $options['status']); ?>><?php _e("publish", 'import-html-pages'); ?></option>
-			        <option value="draft" <?php selected('draft', $options['status']); ?>><?php _e("draft", 'import-html-pages'); ?></option>
-			        <option value="private" <?php selected('private', $options['status']); ?>><?php _e("private", 'import-html-pages'); ?></option>
-			        <option value="pending" <?php selected('pending', $options['status']); ?>><?php _e("pending", 'import-html-pages'); ?></option>
-			    </select>
+	
+	<tr valign="top">
+		<th colspan="2">
+			<h4><?php _e("Custom fields", 'import-html-pages'); ?></h4>
+		</th>
+	</tr>
+
+	<?php if ( !empty($options['customfield_name']) && is_array($options['customfield_name']) ) {
+		foreach ($options['customfield_name'] as $index => $fieldname) : ?>
+		<tr valign="top" class="clone" id="customfield<?php echo $index; ?>">
+			<th>
+				<label><?php _e('Custom field name', 'import-html-pages'); ?><br />
+					<input type="text" name="html_import[customfield_name][<?php echo $index; ?>]" 
+						value="<?php echo $options['customfield_name'][$index]; ?>" />
+					</label><br />
+				<a class="button-secondary delRow hidden" title="Remove field">&times;</a></th>
+	        <td>
+
+				Select field by:<br />
+				<label>
+				<input type="radio" name="html_import[import_field][<?php echo $index; ?>]"
+					value="tag" class="showrow" title="customfield" <?php checked($options['import_field'][$index], 'tag'); ?> />
+				<?php _e('HTML tag', 'import-html-pages'); ?></label> 
+				&nbsp;&nbsp;
+				<label>
+				<input type="radio" name="html_import[import_field][<?php echo $index; ?>]"
+					value="region" class="showrow" title="customfield" <?php checked($options['import_field'][$index], 'tag'); ?> />
+				<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
+			</p>
+
+
+			<table>
+				<tr id="customfield-tag" <?php if ($options['import_field'][$index] == 'region') echo 'style="display: none;"'; ?> >
+		     	<td class="taginput">
+		            <label><?php _e("Tag", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_tag][<?php echo $index; ?>]" 
+						value="<?php echo $options['customfield_tag'][$index]; ?>" />
+		            </label>
+
+				</td>
+				<td class="taginput">
+		            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_tagatt][<?php echo $index; ?>]" 
+						value="<?php echo $options['customfield_tagatt'][$index]; ?>" />
+		            </label>
+
+				</td>
+				<td class="taginput">
+		            <label><?php _e("= Value", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_attval][<?php echo $index; ?>]" 
+						value="<?php echo $options['customfield_attval'][$index]; ?>" />
+		            </label>
+
+		        </td>
+				</tr>
+				<tr id="customfield-region" <?php if ($options['import_field'][$index] == 'tag') echo 'style="display: none;"'; ?> >
+					<td colspan="3">
+						<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
+				        <input type="text" name="html_import[customfield_region][<?php echo $index; ?>]" 
+							value="<?php echo $options['customfield_region'][$index]; ?>" />  
+				        </label>
+					</td>
+				</tr>
+			</table>
+
 			</td>
-			</tr>
-			<tr>
-			<th><?php _e("Set timestamps to", 'import-html-pages'); ?></th>
-			<td>
-				<select name="html_import[timestamp]" id="timestamp">
-			    	<option value="now" <?php if ($options['timestamp'] == 'now') echo 'selected="selected"'; ?>><?php _e("now", 'import-html-pages'); ?></option>
-			        <option value="filemtime" <?php if ($options['timestamp'] == 'filemtime') echo 'selected="selected"'; ?>>
-						<?php _e("last time the file was modified", 'import-html-pages'); ?></option>
-			    </select>
+	    </tr>
+	<?php endforeach;
+	} else { ?>
+		<tr valign="top" class="clone" id="customfield0">
+			<th>
+				<label><?php _e('Custom field name', 'import-html-pages'); ?><br />
+					<input type="text" name="html_import[customfield_name][]" value="" />
+					</label><br />
+				<a class="button-secondary delRow hidden" title="Remove field">&times;</a></th>
+	        <td>
+
+				Select field by:<br />
+				<label>
+				<input type="radio" name="html_import[import_field][]"
+					value="tag" class="showrow" title="customfield" />
+				<?php _e('HTML tag', 'import-html-pages'); ?></label> 
+				&nbsp;&nbsp;
+				<label>
+				<input type="radio" name="html_import[import_field][]"
+					value="region" class="showrow" title="customfield" />
+				<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
+			</p>
+
+
+			<table>
+				<tr id="customfield-tag" style="display: none;">
+		     	<td class="taginput">
+		            <label><?php _e("Tag", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_tag][]" value="" />
+		            </label>
+
+				</td>
+				<td class="taginput">
+		            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_tagatt][]" value="" />
+		            </label>
+
+				</td>
+				<td class="taginput">
+		            <label><?php _e("= Value", 'import-html-pages'); ?><br />
+		            <input type="text" name="html_import[customfield_attval][]" value="" />
+		            </label>
+
+		        </td>
+				</tr>
+				<tr id="customfield-region" style="display: none;">
+					<td colspan="3">
+						<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
+				        <input type="text" name="html_import[customfield_region][]" value="" />  
+				        </label>
+					</td>
+				</tr>
+			</table>
+
 			</td>
-			</tr>
-			<tr>
-			<th><?php _e("Set author to", 'import-html-pages'); ?></th>
-			<td>
-				<?php wp_dropdown_users(array('selected' => $options['user'], 'name' => 'html_import[user]', 'who' => 'authors')); ?>
-			</td>
-			</tr>
-			
-			<tr id="hierarchy" <?php if (!is_post_type_hierarchical($options['type'])) echo "style=display:none;"; ?>>
-			<th><?php _e("Import pages as children of: ", 'import-html-pages'); ?></th>
-			<td>
-		        <?php 
-		            $pages = wp_dropdown_pages(array('echo' => 0, 'selected' => $options['root_parent'], 'name' => 'html_import[root_parent]', 'show_option_none' => __('None (top level)', 'import-html-pages'), 'sort_column'=> 'menu_order, post_title'));
-		            if (empty($pages)) $pages = "<select name=\"root_parent\"><option value=\"0\">"._e('None (top level)', 'import-html-pages')."</option></select>";
-		            echo $pages;
-		        ?>
-			</td>
-			</tr>
-			
-			<tr id="page-template" <?php if (!is_post_type_hierarchical($options['type'])) echo "style=display:none;"; ?>>
-			<th><?php _e("Template for imported pages: ", 'import-html-pages'); ?></th>
-			<td>
-		        <select name="html_import[page_template]" id="page_template">
-				<option value='0'><?php _e('Default Template'); ?></option>
-				<?php page_template_dropdown($options['page_template']); ?>
-				</select>
-			</td>
-			</tr>
+	    </tr>
+	<?php } // else no custom fields ?>
+
+</tbody>
+<tfoot>
+<tr><td colspan="2"><a class="button-secondary cloneTableRows" href="#">Add a custom field</a></td>
+	</tr>
+	</tfoot>
 		</table>
-		
-		
+		</div>
 		
 		<!-- TAXONOMIES -->
-
+		<div id="tabs-5">
 		<h3><?php _e("Taxonomies", 'import-html-pages'); ?></h3>				
 		<div class="ui-tabs-panel" id="taxonomies">
 			<?php
@@ -461,11 +668,15 @@ function html_import_options_page() { ?>
 			<?php if ( is_array( $taxonomies ) ) : ?>
 			<p><?php _e('Assign categories, tags, and custom taxonomy terms to your imported posts:', 'import-html-pages'); ?></p>
 					<?php foreach ( $taxonomies as $tax ) :
+						if (isset($options[$tax->name]))
+							$value = esc_attr($options[$tax->name]);
+						else
+							$value = '';
 						if (!is_taxonomy_hierarchical($tax->name)) :
 						// non-hierarchical
 							$nonhierarchical .= '<p class="taxoinput"><label>'.esc_html($tax->label).'<br />';
 							$nonhierarchical .= '<input type="text" name="html_import['.esc_attr($tax->name).']" 
-							 	value="'.esc_attr($options[$tax->name]).'" /></label></p>';
+							 	value="'.$value.'" /></label></p>';
 						else:
 						// hierarchical 
 						?>
@@ -493,11 +704,11 @@ function html_import_options_page() { ?>
 					?>
 			</div>
 			<?php endif; ?>
-			
+		</div>	
 					
 		
 		<!-- TOOLS -->
-		
+		<div id="tabs-6">
 		<h3><?php _e("Tools", 'import-html-pages'); ?></h3>				
 			<table class="form-table ui-tabs-panel" id="tools">
 		        <tr valign="top">
@@ -520,7 +731,7 @@ function html_import_options_page() { ?>
 						<p><?php printf(__('If this importer has saved you hours of copying and pasting, a <a href="%s">donation toward future development</a> would be much appreciated!', 'import-html-pages'), 'http://sillybean.net/code/wordpress/html-import-2/'); ?></p>
 					</td>
 			</table>
-			
+	</div>		
 	
 	</div>	<!-- UI tabs wrapper -->	
 			<p class="submit">
@@ -530,16 +741,51 @@ function html_import_options_page() { ?>
 				<?php } ?>
 			</p>
 		</form>
-	</div> <!-- .ui-tabs -->
+	
 	</div> <!-- .wrap -->
-	<!-- The footer is hidden on this page because it doesn't reposition itself when jQuery show/hide makes the page longer -->
+
 	<script type="text/javascript">
 		jQuery(document).ready(function($) {
-			$(".ui-tabs-panel").each(function(index) {
-				if (index > 0)
-					$(this).addClass("ui-tabs-hide");
+			// Set up jQuery UI tabs
+			$('.ui-tabs').tabs();
+			
+			// Show/hide table rows based on selected radio value
+			$("input.showrow").click(function() {
+			        var tag = $(this).val();
+					var importing = $(this).attr('title');
+					var rowID = $(this).parents("tr").attr("id");
+					//console.log("#"+rowID+" tr#"+importing+"-"+tag);
+			        $("#"+rowID+" tr#"+importing+"-region").hide();
+					$("#"+rowID+" tr#"+importing+"-tag").hide();
+			        $("#"+rowID+" tr#"+importing+"-"+tag).show();
+			    });
+				
+			// Show/hide table rows based on checkbox toggle			
+			$("input.toggle").click(function() {
+			        var tr = this.id;
+					$("tr."+tr).toggle();
+			    });
+			
+			// Clone table rows
+			$(".cloneTableRows").live('click', function(){
+				var thisTableId = $(this).parents("table").attr("id");
+				var lastRow = $('#'+thisTableId + " tbody tr.clone");
+				var oldID = lastRow.attr("id");
+				var newID = oldID.replace('customfield','');
+				newID = newID.valueOf(); // (int)
+				newID++;
+				var newRow = lastRow.clone(true);
+				newRow.attr( "id", 'customfield'+newID ); 
+				$('#'+thisTableId).append(newRow);
+				$('#'+'customfield'+newID+" a.delRow").removeClass('hidden');
+				return false;
 			});
-			$(".ui-tabs").tabs({ fx: { opacity: "toggle", duration: "fast" } });
+
+			// Delete a table row
+			$(".delRow").click(function(){
+				$(this).parents("tr").remove();
+				return false;
+			});
 		});
 	</script>
 	<?php 
@@ -559,12 +805,7 @@ function html_import_validate_options($input) {
 		$msg[] = __("The beginning directory you entered is not an absolute path. Relative paths are not allowed here.", 'import-html-pages');
 		$input['root_directory'] = ABSPATH.__('html-files-to-import', 'import-html-pages');
 	}
-/*	// removed for Win32 compatibility
-	elseif (!file_exists($input['root_directory'])) {
-		$msg[] = __("The beginning directory you entered is not readable. Please check its permissions and try again. (You may ignore this warning if you plan to upload a single file to import.)", 'import-html-pages');
-		$input['root_directory'] = ABSPATH.__('html-files-to-import', 'import-html-pages');
-	}
-*/		
+		
 	$input['root_directory'] = rtrim($input['root_directory'], '/');
 	$input['old_url'] = esc_url(rtrim($input['old_url'], '/'));
 	
@@ -587,12 +828,12 @@ function html_import_validate_options($input) {
 	if (!in_array($input['type'], $post_types))
 		$input['type'] = 'page';
 		
-	if (!in_array( $input['timestamp'], array('now', 'filemtime')))
+	if (!in_array( $input['timestamp'], array('now', 'filemtime', 'customfield')))
 		$input['timestamp'] = 'filemtime';
 		
-	if (!in_array($input['import_content'], array('tag', 'region')))
+	if (!in_array($input['import_content'], array('tag', 'region', 'file')))
 		$input['import_content'] = 'tag';
-	if (!in_array($input['import_title'], array('tag', 'region')))
+	if (!in_array($input['import_title'], array('tag', 'region', 'filename')))
 		$input['import_title'] = 'tag';
 	
 	// trim region/tag/attr/value
@@ -604,6 +845,24 @@ function html_import_validate_options($input) {
 	if (!empty($input['title_tag']))		$input['title_tag'] = 		trim($input['title_tag']);
 	if (!empty($input['title_tagatt']))		$input['title_tagatt'] = 	trim($input['title_tagatt']);
 	if (!empty($input['title_attval']))		$input['title_attval'] = 	esc_attr(trim($input['title_attval']));
+	if (!empty($input['date_region']))		$input['date_region'] = 	trim($input['date_region']);
+	if (!empty($input['date_tag']))			$input['date_tag'] = 		trim($input['date_tag']);
+	if (!empty($input['date_tagatt']))		$input['date_tagatt'] = 	trim($input['date_tagatt']);
+	if (!empty($input['date_attval']))		$input['date_attval'] = 	esc_attr(trim($input['date_attval']));
+	
+	// We could have many custom fields. For now, let's just make it an array. Deal with it in the importer.
+	if (!is_array($input['customfield_name']))
+		$input['customfield_name'] = array( $input['customfield_name'] );
+	if (!is_array($input['import_field']))
+		$input['import_field'] = array( $input['import_field'] );
+	if (!is_array($input['customfield_region']))
+		$input['customfield_region'] = array( $input['customfield_region'] );
+	if (!is_array($input['customfield_tag']))
+		$input['customfield_tag'] = array( $input['customfield_tag'] );
+	if (!is_array($input['customfield_tagatt']))
+		$input['customfield_tagatt'] = array( $input['customfield_tagatt'] );
+	if (!is_array($input['customfield_attval']))
+		$input['customfield_attval'] = array( $input['customfield_attval'] );
 	
 	// must have something to look for in the HTML
 	if ($input['import_content'] == 'tag' && empty($input['content_tag']))

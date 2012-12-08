@@ -225,6 +225,12 @@ class HTML_Import extends WP_Importer {
 		// reduce line breaks and remove empty tags
 		$string = str_replace( '\n', ' ', $string ); 
 		$string = preg_replace( "/<[^\/>]*>([\s]?)*<\/[^>]*>/", ' ', $string );
+		// get rid of remaining newlines; basic HTML cleanup
+		$string = str_replace('&#13;', ' ', $string); 
+		$string = ereg_replace("[\n\r]", " ", $string); 
+		$string = preg_replace_callback('|<(/?[A-Z]+)|', create_function('$match', 'return "<" . strtolower($match[1]);'), $string);
+		$string = str_replace('<br>', '<br />', $string);
+		$string = str_replace('<hr>', '<hr />', $string);
 		return $string;
 	}
 	
@@ -362,15 +368,34 @@ class HTML_Import extends WP_Importer {
 			else
 				@$doc->loadHTML($this->file);
 			$xml = @simplexml_import_dom($doc);
+			// avoid asXML errors when it encounters character range issues
+			libxml_clear_errors();
+			libxml_use_internal_errors(false);
 			
 			// start building the WP post object to insert
 			$my_post = array();
-
+			
+			// title
 			if ($options['import_title'] == "region") {
 				// appending strings unnecessarily so this plugin can be edited in Dreamweaver if needed
 				$titlematch = '/<'.'!-- InstanceBeginEditable name="'.$options['title_region'].'" --'.'>(.*)<'.'!-- InstanceEndEditable --'.'>/isU';
 				preg_match($titlematch, $this->file, $titlematches);
 				$my_post['post_title'] = strip_tags(trim($titlematches[1]));
+			}
+			else if ($options['import_title'] == "filename") {
+				$path_split = explode('/',$path);
+				$file_name = trim(end($path_split));
+				$file_name = preg_replace('/\.[^.]*$/', '', $file_name); // remove extension
+				$parent_directory = trim(prev($path_split));
+				
+				if(basename($path) == $options['index_file']) {
+					$title = $parent_directory;
+				} else {
+					$title = $file_name;
+				}
+				$title = str_replace('_', ' ', $title);
+				$title = str_replace('-', ' ', $title);
+				$my_post['post_title'] = ucwords($title);
 			}
 			else { // it's a tag
 				$titletag = $options['title_tag'];
@@ -388,7 +413,8 @@ class HTML_Import extends WP_Importer {
 			$remove = $options['remove_from_title'];
 			if (!empty($remove))
 				$my_post['post_title'] = str_replace($remove, '', $my_post['post_title']);
-		
+			
+			// slug
 			if ('1' == $options['preserve_slugs']) {
 				// there is no path when we're working with a single uploaded file instead of a directory
 				if (empty($path)) 
@@ -398,6 +424,7 @@ class HTML_Import extends WP_Importer {
 				$my_post['post_name'] = substr($filename,0,strrpos($filename,'.'));
 			}
 			
+			// post type
 			$my_post['post_type'] = $options['type'];
 		
 			if (is_post_type_hierarchical($my_post['post_type'])) {
@@ -411,17 +438,56 @@ class HTML_Import extends WP_Importer {
 				}
 			}
 		
-			if (!empty($path) && $options['timestamp'] == 'filemtime')
+			// date
+			if ($options['timestamp'] == 'filemtime' && !empty($path)) {
 				$date = filemtime($path);
-			else $date = time();
-			$my_post['post_date'] = date("Y-m-d H:i:s", $date);
-			$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
+				$my_post['post_date'] = date("Y-m-d H:i:s", $date);
+				$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
+			}
+			else if ( $options['timestamp'] == 'customfield' ) {
+				if ($options['import_date'] == "region") {
+					// appending strings unnecessarily so this plugin can be edited in Dreamweaver if needed
+					$datematch = '/<'.'!-- InstanceBeginEditable name="'.$options['date_region'].'" --'.'>(.*)<'.'!-- InstanceEndEditable --'.'>/isU';
+					preg_match($datematch, $this->file, $datematches);
+					$date = $datematches[1];
+				}
+				else { // it's a tag
+					$tag = $options['date_tag'];
+					$tagatt = $options['date_tagatt'];
+					$attval = $options['date_attval'];
+					$xquery = '//'.$tag;
+					if (!empty($tagatt))
+						$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
+					$date = $xml->xpath($xquery);
+					if (is_array($date) && isset($date[0]) && is_object($date[0])) {
+						$date = strip_tags($date[0]);
+						$date = strtotime($date);
+						//echo $date; exit;
+						$my_post['post_date'] = date("Y-m-d H:i:s", $date);
+						$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
+					}
+					else { // fallback 
+						$date = time();
+						$my_post['post_date'] = date("Y-m-d H:i:s", $date);
+						$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
+					}
+				}
+			}
+			else {
+			 	$date = time();
+				$my_post['post_date'] = date("Y-m-d H:i:s", $date);
+				$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
+			}
 
+			// content
 			if ($options['import_content'] == "region") {
 				// appending strings unnecessarily so this plugin can be edited in Dreamweaver if needed
 				$contentmatch = '/<'.'!-- InstanceBeginEditable name="'.$options['content_region'].'" --'.'>(.*)<'.'!-- InstanceEndEditable --'.'>/isU';
 				preg_match($contentmatch, $this->file, $contentmatches);
 				$my_post['post_content'] = $contentmatches[1];
+			}
+			else if ( $options['import_content'] == "file" ) { // import entire file
+				$my_post['post_content'] = $this->file;
 			}
 			else { // it's a tag
 				$tag = $options['content_tag'];
@@ -439,15 +505,33 @@ class HTML_Import extends WP_Importer {
 			if (!empty($my_post['post_content'])) {
 				if (!empty($options['clean_html']))
 					$my_post['post_content'] = $this->clean_html($my_post['post_content'], $options['allow_tags'], $options['allow_attributes']);
-				
-				// get rid of remaining newlines; basic HTML cleanup
-				$my_post['post_content'] = str_replace('&#13;', ' ', $my_post['post_content']); 
-				$my_post['post_content'] = ereg_replace("[\n\r]", " ", $my_post['post_content']); 
-				$my_post['post_content'] = preg_replace_callback('|<(/?[A-Z]+)|', create_function('$match', 'return "<" . strtolower($match[1]);'), $my_post['post_content']);
-				$my_post['post_content'] = str_replace('<br>', '<br />', $my_post['post_content']);
-				$my_post['post_content'] = str_replace('<hr>', '<hr />', $my_post['post_content']);
+			}
+			
+			// custom fields
+			$customfields = array();
+			foreach ($options['customfield_name'] as $index => $fieldname) {
+				if (!empty($fieldname)) {
+					if ($options['import_field'][$index] == "region") {
+						// appending strings unnecessarily so this plugin can be edited in Dreamweaver if needed
+						$custommatch = '/<'.'!-- InstanceBeginEditable name="'.$options['customfield_region'][$index].'" --'.'>(.*)<'.'!-- InstanceEndEditable --'.'>/isU';
+						preg_match($custommatch, $this->file, $custommatches);
+						$customfields[$fieldname] = $custommatches[1];
+					}
+					else { // it's a tag
+						$tag = $options['customfield_tag'][$index];
+						$tagatt = $options['customfield_tagatt'][$index];
+						$attval = $options['customfield_attval'][$index];
+						$xquery = '//'.$tag;
+						if (!empty($tagatt))
+							$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
+						$content = $xml->xpath($xquery);
+						if (is_array($content) && isset($content[0]) && is_object($content[0]))
+							$customfields[$fieldname] = strip_tags($content[0]);
+					}
+				}
 			}
 
+			// excerpt
 			$excerpt = $options['meta_desc'];
 			if (!empty($excerpt)) {
 				$my_post['post_excerpt'] = $xml->xpath('//meta[@name="description"]');
@@ -456,7 +540,10 @@ class HTML_Import extends WP_Importer {
 				$my_post['post_excerpt'] = (string)$my_post['post_excerpt'];
 			}
 			
+			// status
 			$my_post['post_status'] = $options['status'];
+			
+			// author
 			$my_post['post_author'] = $options['user'];
 		}
 		
@@ -495,6 +582,11 @@ class HTML_Import extends WP_Importer {
 			if (isset($options[$tax->name]))
 				wp_set_post_terms( $post_id, $options[$tax->name], $tax->name, false);
 		}
+		
+		// ...and custom fields
+		if (isset($customfields))
+			foreach ($customfields as $fieldname => $fieldvalue)
+				add_post_meta($post_id, $fieldname, $fieldvalue, true);
 		
 		// ...and set the page template, if any
 		if (isset($options['page_template']) && !empty($options['page_template']))
@@ -913,11 +1005,11 @@ class HTML_Import extends WP_Importer {
 			echo '<h2>'.__( 'Importing HTML files...', 'import-html-pages').'</h2>';
 			$this->get_files_from_directory($options['root_directory']);
 			$this->print_results($options['type']);
-			if ($options['import_images'])
+			if (isset($options['import_images']) && $options['import_images'])
 				$this->find_images();
-			if ($options['import_documents'])
+			if (isset($options['import_documents']) && $options['import_documents'])
 				$this->find_documents();
-			if ($options['fix_links'])
+			if (isset($options['fix_links']) && $options['fix_links'])
 				$this->find_internal_links();
 		}
 		else {

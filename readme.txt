@@ -3,14 +3,14 @@ Contributors: sillybean
 Donate link: http://sillybean.net/code/wordpress/html-import-2/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 3.0
-Tested up to: 3.2.1
-Stable tag: 2.2
+Tested up to: 3.5
+Stable tag: 2.3
 
 Imports well-formed HTML files into WordPress pages. 
 
 == Description ==
 
-Imports well-formed static HTML files into WordPress.
+Imports well-formed static HTML files into WordPress. Requires PHP 5.
 
 This plugin will import a directory of files as either pages or posts. You may specify the HTML tag (e.g. `<body>`, `<div id="content">`, or `<td width="732">`) or Dreamweaver template region (e.g. 'Main Content') containing the content you want to import.
 
@@ -35,6 +35,13 @@ Options in 2.0:
 * clean up imported HTML and strip unwanted tags and attributes
 * fix internal links in imported files to match new permalinks
 
+New in 2.3:
+
+* import the entire file and generate the title from the filename 
+* preserve the original filename as the imported page's slug
+* choose the date from an HTML tag or Dreamweaver region (uses <a href="http://php.net/strtotime">strtotime()</a>; results may vary)
+* import additional HTML tags or Dreamweaver regions as custom fields
+
 See the <a href="http://stephanieleary.com/downloads/html-import/user-guide.html">User Guide</a> for details on all the options.
 
 == Installation ==
@@ -45,13 +52,19 @@ See the <a href="http://stephanieleary.com/downloads/html-import/user-guide.html
 
 == Frequently Asked Questions ==
 
+= My title imported, but the content was empty! (Or vice versa.) =
+
+You didn't find the right HTML tag that surrounds the content you wanted to import. Open up one of your old files in a browser and use its inspector (or Firebug) to select the content you want. Look for the tag that surrounds that content and find something unique about it. (An ID attribute is best, but anything <em>unique</em> will work. If it's a table cell, a unique width will do just fine.) The enter the tag name, the attribute name, and the attribute's value into the separate boxes in the Content section of the importer's options page.
+
+See the <a href="http://stephanieleary.com/downloads/html-import/user-guide.html">User Guide</a> for details and examples.
+
 = Does this work on Windows servers? =
 
 Yes! Let me know if you encounter any problems.
 
 = Will the importer duplicate the design of my old site? =
 
-No. The importer simply extracts the relevant part of each HTML file and copies it into a WordPress post. You'll need to <a href="http://codex.wordpress.org/Theme_Development">create a custom theme</a> if you want to preserve the site's appearance.
+No. The importer simply extracts the relevant part of each HTML file and copies it into a WordPress post. You'll need to <a href="http://codex.wordpress.org/Theme_Development">create a custom theme</a> if you want to preserve the site's appearance as well as its content.
 
 = Will this work on large numbers of HTML files? =
 
@@ -85,9 +98,19 @@ Added some helpers to work around servers that do not support PHP's multibyte st
 Now includes an option to fix internal links.
 = 2.2 =
 Now imports media files other than images.
+= 2.3 =
+New features: import entire file, generate title from filename, preserve filename as slug, choose date from HTML, import custom fields.
 
 == Changelog ==
 
+= 2.3 =
+* New option to import an entire file's contents instead of selecting a portion of it. (Props Shawn Zilbert.)
+* New option to generate the title from the filename. (Props Shawn Zilbert.)
+* New option to preserve the original filename (minus the extension) as the imported page slug. (Sponsored by <a href="http://nycinsider.com">NYCinsider.com</a>)
+* New option to choose the date from an HTML tag or Dreamweaver region.
+* New option to import custom fields.
+* UI cleanup. The tabs should work a bit better.
+* "asXML() on a non-object" errors should be less frequent now.
 = 2.2 =
 * Now imports media files other than images. Uses `rawurldecode()` to remove junk like `%20` from file names, and thus should now handle situations where your link is something like `my%20file.doc` and your file is actually called `my file.doc`. 
 * Now handles images with https srcs.
