@@ -48,7 +48,7 @@ class HTML_Import extends WP_Importer {
 			<?php _e('a single file', 'import-html-pages'); ?></label>
 		</p>
 		
-		<p id="single" style="display: none;">
+		<p id="single">
 		<label for="import"><?php _e('Choose an HTML file from your computer:', 'import-html-pages'); ?></label>
 		<input type="file" id="import" name="import" size="25" />
 		</p>
@@ -196,7 +196,7 @@ class HTML_Import extends WP_Importer {
 		        array_push( $outSegs, $seg );
 		}
 		$outPath = implode( '/', $outSegs );
-		if ( $path[0] == '/' )
+		if ( isset($path[0]) && $path[0] == '/' )
 		    $outPath = '/' . $outPath;
 		if ( $outPath != '/' &&
 		    (mb_strlen($path)-1) == mb_strrpos( $path, '/', 'UTF-8' ) )
@@ -271,13 +271,11 @@ class HTML_Import extends WP_Importer {
 	      $path = $rootdir.'/'.$val;
 	      if(is_file($path) && is_readable($path)) {
 			$filename_parts = pathinfo($path);
-			$ext = strtolower($filename_parts['extension']);
-			/*
-			$filename_parts = explode(".",$val);
-			$ext = strtolower($filename_parts[count($filename_parts) - 1]);
-			/**/
+			$ext = '';
+			if (isset($filename_parts['extension']))
+				$ext = strtolower($filename_parts['extension']);
 			// allowed extensions only, please
-			if (in_array($ext, $this->allowed)) {
+			if (!empty($ext) && in_array($ext, $this->allowed)) {
 				if (filesize($path) > 0) {  // silently skip empty files
 					// read the HTML file 
 					$contents = @fopen($path);  // read entire file
@@ -296,9 +294,12 @@ class HTML_Import extends WP_Importer {
 			  $createpage = array();
 			  // get list of files in this directory only (checking children)
 				$files = scandir($path);
+				$exts = array();
 				foreach ($files as $file) {
+					$ext = '';
 					$filename_parts = pathinfo($file);
-					$ext = strtolower($filename_parts['extension']);
+					if (isset($filename_parts['extension']))
+						$ext = strtolower($filename_parts['extension']);
 					/*
 					$ext = strrchr($file,'.');
 					/**/
@@ -332,7 +333,7 @@ class HTML_Import extends WP_Importer {
 			$title = str_replace('-', ' ', $title);
 			$my_post['post_title'] = ucwords($title);
 			
-			if ('1' == $options['preserve_slugs']) {
+			if (isset($options['preserve_slugs']) && '1' == $options['preserve_slugs']) {
 				$filename = basename($path);
 				$my_post['post_name'] = substr($filename,0,strrpos($filename,'.'));
 			}
@@ -404,18 +405,35 @@ class HTML_Import extends WP_Importer {
 				$titlequery = '//'.$titletag;
 				if (!empty($titletagatt))
 					$titlequery .= '[@'.$titletagatt.'="'.$titleattval.'"]';
-				$my_post['post_title'] = $xml->xpath($titlequery);
-				if (isset($my_post['post_title'][0]))
-					$my_post['post_title'] = strip_tags(trim($my_post['post_title'][0]));
-				else $my_post['post_title'] = '';
+				$title = $xml->xpath($titlequery);
+				if (isset($title[0]))
+					$title = $title[0]->asXML(); // asXML() preserves HTML in content
+				else { // fallback
+					$title = $xml->xpath('//title');
+					if (isset($title[0]))
+						$title = $title[0];
+					if (empty($title))
+						$title = '';
+					else
+						$title = (string)$title;
+				}
+				// last resort: filename
+				if (empty($title)) {
+					$path_split = explode('/',$path);
+					$title = trim(end($path_split));
+				}	
+				$title = str_replace('<br>',' ',$title);
+				$my_post['post_title'] = trim(strip_tags($title));
 			}
 		
 			$remove = $options['remove_from_title'];
 			if (!empty($remove))
 				$my_post['post_title'] = str_replace($remove, '', $my_post['post_title']);
 			
+			//echo '<pre>'.$my_post['post_title'].'</pre>'; exit;
+			
 			// slug
-			if ('1' == $options['preserve_slugs']) {
+			if (isset($options['preserve_slugs']) && '1' == $options['preserve_slugs']) {
 				// there is no path when we're working with a single uploaded file instead of a directory
 				if (empty($path)) 
 					$filename = $this->filename;
@@ -460,24 +478,23 @@ class HTML_Import extends WP_Importer {
 						$xquery .= '[@'.$tagatt.'="'.$attval.'"]';
 					$date = $xml->xpath($xquery);
 					if (is_array($date) && isset($date[0]) && is_object($date[0])) {
+						if (isset($date[0]))
+							$stripdate = $date[0]->asXML(); // asXML() preserves HTML in content
 						$date = strip_tags($date[0]);
 						$date = strtotime($date);
 						//echo $date; exit;
-						$my_post['post_date'] = date("Y-m-d H:i:s", $date);
-						$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
 					}
 					else { // fallback 
 						$date = time();
-						$my_post['post_date'] = date("Y-m-d H:i:s", $date);
-						$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
 					}
+
 				}
 			}
 			else {
 			 	$date = time();
-				$my_post['post_date'] = date("Y-m-d H:i:s", $date);
-				$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
 			}
+			$my_post['post_date'] = date("Y-m-d H:i:s", $date);
+			$my_post['post_date_gmt'] = date("Y-m-d H:i:s", $date);
 
 			// content
 			if ($options['import_content'] == "region") {
@@ -499,8 +516,17 @@ class HTML_Import extends WP_Importer {
 				$content = $xml->xpath($xquery);
 				if (is_array($content) && isset($content[0]) && is_object($content[0]))
 					$my_post['post_content'] = $content[0]->asXML(); // asXML() preserves HTML in content
-				else $my_post['post_content'] = '';
+				else {  // fallback
+					$content = $xml->xpath('//body');
+					if (is_array($content) && isset($content[0]) && is_object($content[0]))
+						$my_post['post_content'] = $content[0]->asXML();
+					else
+						$my_post['post_content'] = '';
+				}
 			}
+			
+			if ($options['title_inside'])
+				$my_post['post_content'] = str_replace($title, '', $my_post['post_content']);
 			
 			if (!empty($my_post['post_content'])) {
 				if (!empty($options['clean_html']))
@@ -538,6 +564,8 @@ class HTML_Import extends WP_Importer {
 				$my_post['post_excerpt'] = $xml->xpath('//meta[@name="description"]');
 				if (isset($my_post['post_excerpt'][0]))
 					$my_post['post_excerpt'] = $my_post['post_excerpt'][0]['content'];
+				if (is_array($my_post['post_excerpt']))
+					$my_post['post_excerpt'] = implode('',$my_post['post_excerpt']);
 				$my_post['post_excerpt'] = (string)$my_post['post_excerpt'];
 			}
 			
@@ -558,7 +586,8 @@ class HTML_Import extends WP_Importer {
 			$this->table[] = "<tr><th class='error'>--</th><td colspan='3' class='error'> " . sprintf(__("%s (%s) has already been imported", 'html-import-pages'), $my_post['post_title'], $handle) . "</td></tr>";
 		
 		// if we're doing hierarchicals and this is an index file of a subdirectory, instead of importing this as a separate page, update the content of the placeholder page we created for the directory
-		if (is_post_type_hierarchical($options['type']) && dirname($path) != $options['root_directory'] && basename($path) == $options['index_file']) {
+		$index_files = explode(',',$options['index_file']);
+		if (is_post_type_hierarchical($options['type']) && dirname($path) != $options['root_directory'] && in_array(basename($path), $index_files) ) {
 			$post_id = array_search(dirname($path), $this->filearr);
 			if ($post_id !== 0)
 				$updatepost = true;
@@ -577,17 +606,25 @@ class HTML_Import extends WP_Importer {
 		if (!$post_id) 
 			$this->table[] = "<tr><th class='error'>--</th><td colspan='3' class='error'> " . sprintf(__("Could not import %s. You should copy its contents manually.", 'html-import-pages'), $handle) . "</td></tr>";
 		
-		// if no errors, handle all the taxonomies...
+		// if no errors, handle custom fields
+		if (isset($customfields)) {
+			foreach ($customfields as $fieldname => $fieldvalue) {
+				// allow user to set tags via custom field named 'post_tag'
+				if ($fieldname == 'post_tag')
+					$customfieldtags = $fieldvalue;
+				else
+					add_post_meta($post_id, $fieldname, $fieldvalue, true);
+			}
+		}
+				
+		// ... and all the taxonomies...
 		$taxonomies = get_taxonomies( array( 'public' => true ), 'objects', 'and' );
 		foreach ( $taxonomies as $tax ) {
 			if (isset($options[$tax->name]))
 				wp_set_post_terms( $post_id, $options[$tax->name], $tax->name, false);
 		}
-		
-		// ...and custom fields
-		if (isset($customfields))
-			foreach ($customfields as $fieldname => $fieldvalue)
-				add_post_meta($post_id, $fieldname, $fieldvalue, true);
+		if (isset($customfieldtags))
+			wp_set_post_terms( $post_id, $customfieldtags, 'post_tag', false);
 		
 		// ...and set the page template, if any
 		if (isset($options['page_template']) && !empty($options['page_template']))
@@ -735,6 +772,14 @@ class HTML_Import extends WP_Importer {
 		for ($i=0; $i<count($matches[0]); $i++) {
 			$srcs[] = $matches[1][$i];
 		}
+		
+		// also check custom fields
+		$custom = get_post_meta($id, '_ise_old_sidebar', true);
+		preg_match_all('/<img[^>]* src=[\'"]?([^>\'" ]+)/', $custom, $matches);
+		for ($i=0; $i<count($matches[0]); $i++) {
+			$srcs[] = $matches[1][$i];
+		}
+		
 		if (!empty($srcs)) {
 			$count = count($srcs);
 			
@@ -743,7 +788,7 @@ class HTML_Import extends WP_Importer {
 			foreach ($srcs as $src) {
 				// src="http://foo.com/images/foo"
 				if (preg_match('/^http:\/\//', $src) || preg_match('/^https:\/\//', $src)) { 
-					$imgpath = $matches[1][$i];			
+					$imgpath = $src;			
 				}
 				// src="/images/foo"
 				elseif ('/' == substr($src, 0, 1)) { 
@@ -769,6 +814,7 @@ class HTML_Import extends WP_Importer {
 					//  replace paths in the content
 					if (!is_wp_error($imgpath)) {			
 						$content = str_replace($src, $imgpath, $content);
+						$custom = str_replace($src, $imgpath, $custom);
 						$update = true;
 					}
 					
@@ -782,6 +828,7 @@ class HTML_Import extends WP_Importer {
 				$my_post['ID'] = $id;
 				$my_post['post_content'] = $content;
 				wp_update_post($my_post);
+				update_post_meta($id, '_ise_old_sidebar', $custom); 
 			}
 			
 			_e('done.', 'html-import-images');

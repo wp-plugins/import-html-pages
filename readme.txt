@@ -4,7 +4,7 @@ Donate link: http://sillybean.net/code/wordpress/html-import-2/
 Tags: import, pages, static files, taxonomies, taxonomy, dreamweaver, Word, FrontPage
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 2.3
+Stable tag: 2.4
 
 Imports well-formed HTML files into WordPress pages. 
 
@@ -22,13 +22,14 @@ Options in 2.0:
 
 * import files into any post type (posts, pages, or custom post types set to `public`)
 * import linked media files (images, documents, etc.) to the media library
-* select content and title by HTML tag or Dreamweaver template region
+* select content, title, and custom fields by HTML tag or Dreamweaver template region
 * remove a common phrase (such as the site name) from imported titles
+* remove the imported title from within the content area
 * upload a single file or scan a directory for files to import
 * specify file extensions to import (e.g. html, htm, php)
 * specify directories to exclude (e.g. images, css)
 * if importing pages (or any hierarchical post type), specify whether your top-level files should become top-level pages or children of an existing page
-* specify an index file name (e.g. index.html, default.htm) whose contents should be used for the directory parent pages 
+* specify index file names (e.g. index.html, default.htm) whose contents should be used for the directory parent pages 
 * set tags, categories, and custom taxonomies
 * choose status, author, and timestamp
 * use meta descriptions as excerpts
@@ -41,6 +42,12 @@ New in 2.3:
 * preserve the original filename as the imported page's slug
 * choose the date from an HTML tag or Dreamweaver region (uses <a href="http://php.net/strtotime">strtotime()</a>; results may vary)
 * import additional HTML tags or Dreamweaver regions as custom fields
+
+New in 2.4:
+
+* option to remove imported title from within content area
+* fallbacks: if your chosen tag/area is empty or does not exist, the importer will select `<body>` for content and `<title>` for the title
+* use a custom field named 'post_tag' to import tags from a portion of the file
 
 See the <a href="http://stephanieleary.com/downloads/html-import/user-guide.html">User Guide</a> for details on all the options.
 
@@ -103,6 +110,13 @@ New features: import entire file, generate title from filename, preserve filenam
 
 == Changelog ==
 
+= 2.4 =
+* You can now specify more than one index filename (e.g. 'index.php, default.htm')
+* New option to remove the imported title from within the content area
+* Fallbacks: if your chosen tag/area is empty or does not exist, the importer will select `<body>` for content and `<title>` for the title. As a last resort, if there is no title, the original file name will become the title.
+* You can now use a custom field named 'post_tag' to import tags from a portion of the file
+* UI fixes for the custom fields tab
+* Bug fix: the importer now correctly recognizes absolute links to images
 = 2.3 =
 * New option to import an entire file's contents instead of selecting a portion of it. (Props Shawn Zilbert.)
 * New option to generate the title from the filename. (Props Shawn Zilbert.)

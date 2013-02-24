@@ -31,6 +31,7 @@ function html_import_get_options() {
 		'title_tagatt' => '',
 		'title_attval' => '',
 		'remove_from_title' => '',
+		'title_inside' => 0,
 		'meta_desc' => 1,
 		'user' => 0,
 		'page_template' => 0,
@@ -59,7 +60,6 @@ function html_import_options_page() { ?>
 			<?php 
 			settings_fields('html_import');
 			get_settings_errors( 'html_import' );	
-			settings_errors( 'html_import' );
 			$options = html_import_get_options();
 			//$msg .= '<pre>'. print_r($options, true) .'</pre>';
 			//echo esc_html( $msg );
@@ -317,7 +317,7 @@ function html_import_options_page() { ?>
 			                </span>
 			            </td> 
 					</tr>
-					<tr class="clean-region" <?php if (!$options['clean_html']) echo 'style="display:none;"'; ?>>
+					<tr class="clean_html" <?php if (!$options['clean_html']) echo 'style="display:none;"'; ?>>
 					<th><?php _e("Allowed attributes", 'import-html-pages'); ?></th>
 			            <td><label>
 				 			<input type="text" name="html_import[allow_attributes]" id="allow_attributes" 
@@ -354,7 +354,7 @@ function html_import_options_page() { ?>
 				
 				
 				<table>
-					<tr id="title-tag" style="display:none;">
+					<tr id="title-tag" <?php if ($options['import_title'] !== 'tag') echo 'style="display:none;"'; ?> >
 					     	<td class="taginput">
 					            <label><?php _e("Tag", 'import-html-pages'); ?><br />
 					            <input type="text" name="html_import[title_tag]" id="title_tag" value="<?php echo esc_attr_e($options['title_tag']); ?>" />
@@ -379,7 +379,8 @@ function html_import_options_page() { ?>
 						</tr>
 
 
-						<tr id="title-region" style="display:none;">
+						<tr id="title-region" <?php if ($options['import_title'] !== 'region') echo 'style="display:none;"'; ?> >
+						     	<td class="taginput">
 							<td colspan="3">
 								<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
 						        <input type="text" name="html_import[title_region]" id="title_region" value="<?php esc_attr_e($options['title_region']); ?>" />  
@@ -400,6 +401,15 @@ function html_import_options_page() { ?>
 					<span class="description"><?php _e("Any common title phrase (such as the site name, which most themes will print automatically)", 'import-html-pages'); ?></span>
 				</td>
 			</tr>
+			
+			<tr>
+			<th><?php _e("Title position", 'import-html-pages'); ?></th>
+			<td>
+				<label><input name="html_import[title_inside]" id="title_inside"  type="checkbox" value="1" 
+					<?php checked($options['title_inside'], '1'); ?> /> <?php _e("The title is inside the content area and should be removed from the post body", 'import-html-pages'); ?></label>
+			</td>
+			</tr>
+			<tr>
 			
 				<tr valign="top">
 			        <th scope="row"><?php _e("Import files as", 'import-html-pages'); ?></th>
@@ -496,7 +506,7 @@ function html_import_options_page() { ?>
 				
 				
 				<table>
-					<tr id="date-tag" <?php if ($options['import_date'] != 'tag') echo 'style="display: none;"'; ?>>
+					<tr id="date-tag" <?php if ($options['import_date'] !== 'tag') echo 'style="display: none;"'; ?>>
 			     	<td class="taginput">
 			            <label><?php _e("Tag", 'import-html-pages'); ?><br />
 			            <input type="text" name="html_import[date_tag]" id="date_tag" value="<?php echo esc_attr_e($options['date_tag']); ?>" />
@@ -513,7 +523,7 @@ function html_import_options_page() { ?>
 			            </label>
 			        </td>
 			</tr>
-			<tr id="date-region" <?php if ($options['import_date'] != 'region') echo 'style="display: none;"'; ?>>
+			<tr id="date-region" <?php if ($options['import_date'] !== 'region') echo 'style="display: none;"'; ?>>
 				<td colspan="3">
 					<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
 			        <input type="text" name="html_import[date_region]" value="<?php esc_attr_e($options['date_region']); ?>" />  
@@ -537,9 +547,9 @@ function html_import_options_page() { ?>
 			<th>
 				<label><?php _e('Custom field name', 'import-html-pages'); ?><br />
 					<input type="text" name="html_import[customfield_name][<?php echo $index; ?>]" 
-						value="<?php echo $options['customfield_name'][$index]; ?>" />
+						value="<?php esc_attr_e($options['customfield_name'][$index]); ?>" />
 					</label><br />
-				<a class="button-secondary delRow hidden" title="Remove field">&times;</a></th>
+				<a class="button-secondary delRow" title="Remove field">&times;</a></th>
 	        <td>
 
 				Select field by:<br />
@@ -550,7 +560,7 @@ function html_import_options_page() { ?>
 				&nbsp;&nbsp;
 				<label>
 				<input type="radio" name="html_import[import_field][<?php echo $index; ?>]"
-					value="region" class="showrow" title="customfield" <?php checked($options['import_field'][$index], 'tag'); ?> />
+					value="region" class="showrow" title="customfield" <?php checked($options['import_field'][$index], 'region'); ?> />
 				<?php _e('Dreamweaver template region', 'import-html-pages'); ?></label>
 			</p>
 
@@ -560,21 +570,21 @@ function html_import_options_page() { ?>
 		     	<td class="taginput">
 		            <label><?php _e("Tag", 'import-html-pages'); ?><br />
 		            <input type="text" name="html_import[customfield_tag][<?php echo $index; ?>]" 
-						value="<?php echo $options['customfield_tag'][$index]; ?>" />
+						value="<?php  esc_attr_e($options['customfield_tag'][$index]); ?>" />
 		            </label>
 
 				</td>
 				<td class="taginput">
 		            <label><?php _e("Attribute", 'import-html-pages'); ?><br />
 		            <input type="text" name="html_import[customfield_tagatt][<?php echo $index; ?>]" 
-						value="<?php echo $options['customfield_tagatt'][$index]; ?>" />
+						value="<?php esc_attr_e($options['customfield_tagatt'][$index]); ?>" />
 		            </label>
 
 				</td>
 				<td class="taginput">
 		            <label><?php _e("= Value", 'import-html-pages'); ?><br />
 		            <input type="text" name="html_import[customfield_attval][<?php echo $index; ?>]" 
-						value="<?php echo $options['customfield_attval'][$index]; ?>" />
+						value="<?php esc_attr_e($options['customfield_attval'][$index]); ?>" />
 		            </label>
 
 		        </td>
@@ -583,7 +593,7 @@ function html_import_options_page() { ?>
 					<td colspan="3">
 						<label><?php _e("Dreamweaver template region", 'import-html-pages'); ?><br />
 				        <input type="text" name="html_import[customfield_region][<?php echo $index; ?>]" 
-							value="<?php echo $options['customfield_region'][$index]; ?>" />  
+							value="<?php esc_attr_e($options['customfield_region'][$index]); ?>" />  
 				        </label>
 					</td>
 				</tr>
@@ -598,7 +608,7 @@ function html_import_options_page() { ?>
 				<label><?php _e('Custom field name', 'import-html-pages'); ?><br />
 					<input type="text" name="html_import[customfield_name][]" value="" />
 					</label><br />
-				<a class="button-secondary delRow hidden" title="Remove field">&times;</a></th>
+				<a class="button-secondary delRow" title="Remove field">&times;</a></th>
 	        <td>
 
 				Select field by:<br />
@@ -615,7 +625,7 @@ function html_import_options_page() { ?>
 
 
 			<table>
-				<tr id="customfield-tag" style="display: none;">
+				<tr id="customfield-tag">
 		     	<td class="taginput">
 		            <label><?php _e("Tag", 'import-html-pages'); ?><br />
 		            <input type="text" name="html_import[customfield_tag][]" value="" />
@@ -666,7 +676,8 @@ function html_import_options_page() { ?>
 			$taxonomies = get_taxonomies( array( 'public' => true ), 'objects', 'and' );
 			?>
 			<?php if ( is_array( $taxonomies ) ) : ?>
-			<p><?php _e('Assign categories, tags, and custom taxonomy terms to your imported posts:', 'import-html-pages'); ?></p>
+			<p><?php _e('Here, you may assign categories, tags, and custom taxonomy terms to all your imported posts.', 'import-html-pages'); ?></p>
+			<p><?php _e('To import tags from a region in each file, use a custom field with the name <kbd>post_tag</kbd>.', 'import-html-pages'); ?></p>
 					<?php foreach ( $taxonomies as $tax ) :
 						if (isset($options[$tax->name]))
 							$value = esc_attr($options[$tax->name]);
@@ -743,51 +754,6 @@ function html_import_options_page() { ?>
 		</form>
 	
 	</div> <!-- .wrap -->
-
-	<script type="text/javascript">
-		jQuery(document).ready(function($) {
-			// Set up jQuery UI tabs
-			$('.ui-tabs').tabs();
-			
-			// Show/hide table rows based on selected radio value
-			$("input.showrow").click(function() {
-			        var tag = $(this).val();
-					var importing = $(this).attr('title');
-					var rowID = $(this).parents("tr").attr("id");
-					//console.log("#"+rowID+" tr#"+importing+"-"+tag);
-			        $("#"+rowID+" tr#"+importing+"-region").hide();
-					$("#"+rowID+" tr#"+importing+"-tag").hide();
-			        $("#"+rowID+" tr#"+importing+"-"+tag).show();
-			    });
-				
-			// Show/hide table rows based on checkbox toggle			
-			$("input.toggle").click(function() {
-			        var tr = this.id;
-					$("tr."+tr).toggle();
-			    });
-			
-			// Clone table rows
-			$(".cloneTableRows").live('click', function(){
-				var thisTableId = $(this).parents("table").attr("id");
-				var lastRow = $('#'+thisTableId + " tbody tr.clone");
-				var oldID = lastRow.attr("id");
-				var newID = oldID.replace('customfield','');
-				newID = newID.valueOf(); // (int)
-				newID++;
-				var newRow = lastRow.clone(true);
-				newRow.attr( "id", 'customfield'+newID ); 
-				$('#'+thisTableId).append(newRow);
-				$('#'+'customfield'+newID+" a.delRow").removeClass('hidden');
-				return false;
-			});
-
-			// Delete a table row
-			$(".delRow").click(function(){
-				$(this).parents("tr").remove();
-				return false;
-			});
-		});
-	</script>
 	<?php 
 }
 
@@ -820,6 +786,7 @@ function html_import_validate_options($input) {
 	$input['allow_tags'] = str_replace('/', '', $input['allow_tags']);
 	$input['allow_tags'] = str_replace(' ', '', $input['allow_tags']);
 	$input['allow_attributes'] = str_replace(' ', '', $input['allow_attributes']);
+	$input['index_files'] = str_replace(' ', '', $input['index_files']);
 	
 	if ( !in_array($input['status'], get_post_stati()) ) 
 		$input['status'] = 'publish';
@@ -887,6 +854,8 @@ function html_import_validate_options($input) {
 	if ($input['encode'] > 1) $input['encode'] = 0;
 	$input['meta_desc'] = absint($input['meta_desc']);
 	if ($input['meta_desc'] > 1) $input['meta_desc'] = 1;
+	$input['title_inside'] = absint($input['title_inside']);
+	if ($input['title_inside'] > 1) $input['title_inside'] = 0;
 	
 	// see if this is a real user
 	$input['user'] = absint($input['user']);
